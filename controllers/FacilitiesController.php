@@ -60,7 +60,7 @@ class FacilitiesController extends Controller
 	public function actionPut() {
 
 		$match = Tokens::find()
-			->where('token = :token', [':token' => addslashes($_GET['token'])])
+			->where('token = :token', [':token' => addslashes($_POST['token'])])
 			->andWhere('create_date > :create_date', [':create_date' => date('Y-m-d')])
 			->one();
 
