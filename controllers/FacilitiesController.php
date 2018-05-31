@@ -7,11 +7,14 @@ use yii\filters\AccessControl;
 use app\models\Facilities;
 use app\models\FacilitiesSearch;
 use app\models\Tokens;
+use app\models\Log;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 use yii\helpers\Json;
 use yii\web\Response;
+use yii\web\Session;
+
 
 /**
  * FacilitiesController implements the CRUD actions for Facilities model.
@@ -57,19 +60,48 @@ class FacilitiesController extends Controller
 		]);
 	}
 
-	public function actionPut() {
+	private function doLogEntry() {
 
-		$match = Tokens::find()
-			->where('token = :token', [':token' => addslashes($_POST['token'])])
+	    $log = new Log();
+    	$log->remote_addr		= $_SERVER['REMOTE_ADDR'];
+    	$log->user_agent		= $_SERVER['HTTP_USER_AGENT'];
+    	$log->request_method	= $_SERVER['REQUEST_METHOD'];
+		$log->server_info		= json_encode($_SERVER);
+		$log->session_info		= json_encode(Yii::$app->session);
+    	$log->request_info		= json_encode($_REQUEST);
+
+    	if($log->save(false)){
+			return true;
+    	} else {
+			$arr['success'] = false;
+			$arr['message'] = 'Error. Log entry not saved.';
+			echo json_encode($arr);
+			die();
+    	}
+
+	}
+
+	private function checkToken() {
+
+		if ($_SERVER['REQUEST_METHOD']=='GET'){
+			$reqtokn = addslashes($_GET['token']);
+		};
+		if ($_SERVER['REQUEST_METHOD']=='POST'){
+			$reqtokn = addslashes($_POST['token']);
+		};
+
+		$token = Tokens::find()
+			->where('token = :token', [':token' => $reqtokn])
 			->andWhere('create_date > :create_date', [':create_date' => date('Y-m-d')])
 			->one();
 
-		if (date('Y-m-d',strtotime($match->attributes['create_date'])) != date('Y-m-d')) {
+		if ($token->attributes['id'] != '1') {
+		if (date('Y-m-d',strtotime($token->attributes['create_date'])) != date('Y-m-d')) {
 
 			//$arr['request'] = $_REQUEST;
-			//$arr['match'] = $match->attributes;
+			//$arr['match'] = $token->attributes;
 			//$arr['date'] = date('Y-m-d');
-			//$arr['cdate'] = date('Y-m-d',strtotime($match->attributes['create_date']));
+			//$arr['cdate'] = date('Y-m-d',strtotime($token->attributes['create_date']));
 			$arr['success'] = false;
 			$arr['message'] = 'invalid token';
 
@@ -77,6 +109,14 @@ class FacilitiesController extends Controller
 			echo json_encode($arr);
 			die();
 		}
+		}
+
+	}
+
+	public function actionPut() {
+
+		$this->doLogEntry();
+		$this->checkToken();
 
     	header("Access-Control-Allow-Origin: *");
 
@@ -117,24 +157,8 @@ class FacilitiesController extends Controller
 
     public function actionGet() {
 
-		$match = Tokens::find()
-			->where('token = :token', [':token' => addslashes($_GET['token'])])
-			->andWhere('create_date > :create_date', [':create_date' => date('Y-m-d')])
-			->one();
-
-		if (date('Y-m-d',strtotime($match->attributes['create_date'])) != date('Y-m-d')) {
-
-			//$arr['request'] = $_REQUEST;
-			//$arr['match'] = $match->attributes;
-			//$arr['date'] = date('Y-m-d');
-			//$arr['cdate'] = date('Y-m-d',strtotime($match->attributes['create_date']));
-			$arr['success'] = false;
-			$arr['message'] = 'invalid token';
-
-			header('Content-Type: application/json');
-			echo json_encode($arr);
-			die();
-		}
+		$this->doLogEntry();
+		$this->checkToken();
 
     	header("Access-Control-Allow-Origin: *");
 
@@ -178,7 +202,7 @@ class FacilitiesController extends Controller
 				new_room_no asc,
 				department asc
 
-			limit 400
+			limit 9999
 			";
 
 		$connection = Yii::$app->getDb();
@@ -264,7 +288,7 @@ class FacilitiesController extends Controller
 
     public function actionLookup() {
 
-    	return;
+    	die();
 
     	if (@$_GET['field']=='') {
     		$out[] = 'no match';
@@ -302,7 +326,7 @@ class FacilitiesController extends Controller
      */
     public function actionIndex()
     {
-    	//return;
+    	die();
 
         $searchModel = new FacilitiesSearch();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -321,7 +345,7 @@ class FacilitiesController extends Controller
      */
     public function actionView($id)
     {
-    	//return;
+    	die();
 
         return $this->render('view', [
             'model' => $this->findModel($id),
@@ -357,7 +381,7 @@ class FacilitiesController extends Controller
      */
     public function actionUpdate($id)
     {
-    	return;
+    	die();
 
         $model = $this->findModel($id);
 
@@ -380,7 +404,7 @@ class FacilitiesController extends Controller
      */
     public function actionDelete($id)
     {
-    	return;
+    	die();
 
         $this->findModel($id)->delete();
 
