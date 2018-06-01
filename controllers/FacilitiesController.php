@@ -95,20 +95,18 @@ class FacilitiesController extends Controller
 			->andWhere('create_date > :create_date', [':create_date' => date('Y-m-d')])
 			->one();
 
-		if ($token->attributes['id'] != '1') {
 		if (date('Y-m-d',strtotime($token->attributes['create_date'])) != date('Y-m-d')) {
 
-			//$arr['request'] = $_REQUEST;
-			//$arr['match'] = $token->attributes;
-			//$arr['date'] = date('Y-m-d');
-			//$arr['cdate'] = date('Y-m-d',strtotime($token->attributes['create_date']));
+			$arr['request'] = $_REQUEST;
+			$arr['match'] = $token->attributes;
+			$arr['date'] = date('Y-m-d');
+			$arr['cdate'] = date('Y-m-d',strtotime($token->attributes['create_date']));
 			$arr['success'] = false;
 			$arr['message'] = 'invalid token';
 
 			header('Content-Type: application/json');
 			echo json_encode($arr);
 			die();
-		}
 		}
 
 	}
@@ -134,6 +132,7 @@ class FacilitiesController extends Controller
 		/// $model->longitude			= addslashes($_POST['info']['longitude']);
 		$model->new_room_no			= addslashes($_POST['info']['newRoomNo']);
 
+		$model->gk_display			= addslashes($_POST['gkDisplay']);
 		$model->gk_category			= addslashes($_POST['category']);
 		$model->gk_fontsize			= addslashes($_POST['fontSize']);
 		$model->gk_partialpath		= addslashes($_POST['partialPath']);
@@ -202,8 +201,12 @@ class FacilitiesController extends Controller
 				new_room_no asc,
 				department asc
 
-			limit 9999
 			";
+
+			if ($_GET['limit'] > '0') {
+				$limit = addslashes($_GET['limit']);
+				$sql .= "limit $limit";
+			}
 
 		$connection = Yii::$app->getDb();
 		$command = $connection->createCommand($sql);
@@ -263,10 +266,16 @@ class FacilitiesController extends Controller
 				$out['features'][$key]['geometry']['coordinates'][]		= floatval(-94.581 . rand(10000000000, 99999999999));
 				$out['features'][$key]['geometry']['coordinates'][]		= floatval( 39.045 . rand(100000000000,999999999999));
 
-				$out['features'][$key]['user_properties']['accessible']	= trim($value['accessible']);
-				$out['features'][$key]['user_properties']['bldgName']	= trim($value['bldg_name']);
-				$out['features'][$key]['user_properties']['bldgAbbr']	= trim($value['bldg_abbre']);
-				$out['features'][$key]['user_properties']['newRoomNo']	= trim($value['new_room_no']);
+				$out['features'][$key]['user_properties']['accessible']		= trim($value['accessible']);
+				$out['features'][$key]['user_properties']['bldgName']		= trim($value['bldg_name']);
+				$out['features'][$key]['user_properties']['bldgAbbr']		= trim($value['bldg_abbre']);
+				$out['features'][$key]['user_properties']['newRoomNo']		= trim($value['new_room_no']);
+
+				if ($_GET['webapp']=='map_manager') {
+					$value['gk_display'] = 'Y';
+				}
+
+				$out['features'][$key]['user_properties']['gkDisplay']		= trim($value['gk_display']);
 				//$out['features'][$key]['user_properties']['count']	= $rowCount;
 
 			}

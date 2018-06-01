@@ -42,20 +42,22 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
 
 	// 	public function __construct(){
 	//
+	// 		self::doLdapAuth();
 	// 		parent::__construct();
 	//
 	// 	}
 
 	public static function doLdapAuth() {
 
-		//echo 'doLdapAuth';
+		//echo '<br>doLdapAuth';
+		//die();
 
 		$session = Yii::$app->session;
 
 		$username = $session->get('username');
 		$password = $session->get('password');
 
-		//echo 'creds ' . $username . ' ' . $password;
+		//echo '<br>creds ' . $username . ' ' . $password;
 
 		if ($username=='' || $password=='') {
 			return null;
@@ -91,7 +93,7 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
 						$session->set('userArray', self::$users);
 
 						//echo "<pre>";
-						//print_r($users);
+						//print_r(self::$users);
 						//echo "</pre>";
 						//die();
 
@@ -119,6 +121,7 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
      */
     public static function findIdentity($id)
     {
+    	//self::doLdapAuth();
         return isset(self::$users[$id]) ? new static(self::$users[$id]) : null;
     }
 
@@ -127,6 +130,7 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
      */
     public static function findIdentityByAccessToken($token, $type = null)
     {
+    	//self::doLdapAuth();
         foreach (self::$users as $user) {
             if ($user['accessToken'] === $token) {
                 return new static($user);
@@ -145,6 +149,7 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
     //public static function findByUsername($username)
     public static function findByUsername($username)
     {
+    	//self::doLdapAuth();
     	foreach (self::$users as $user) {
             if (strcasecmp($user['username'], $username) === 0) {
 				return new static($user);
@@ -175,6 +180,7 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
      */
     public function validateAuthKey($authKey)
     {
+    	//return true;
         return $this->authKey === $authKey;
     }
 
@@ -186,6 +192,7 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
      */
     public function validatePassword($password)
     {
+    	//return true;
         return $this->password === $password;
     }
 }
