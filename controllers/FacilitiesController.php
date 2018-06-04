@@ -132,19 +132,21 @@ class FacilitiesController extends Controller
 		/// $model->longitude			= addslashes($_POST['info']['longitude']);
 		$model->new_room_no			= addslashes($_POST['info']['newRoomNo']);
 
-		$model->gk_display			= addslashes($_POST['gkDisplay']);
-		$model->gk_category			= addslashes($_POST['category']);
-		$model->gk_fontsize			= addslashes($_POST['fontSize']);
-		$model->gk_partialpath		= addslashes($_POST['partialPath']);
-		$model->gk_showoncreation	= addslashes($_POST['showOnCreation']);
-		$model->gk_showtooltip		= addslashes($_POST['showToolTip']);
-		$model->gk_tooltiptitle		= addslashes($_POST['tooltipTitle']);
-		$model->gk_tooltipbody		= addslashes($_POST['tooltipBody']);
-		$model->gk_type				= addslashes($_POST['type']);
+		$model->gk_display			= addslashes($_POST['info']['gkDisplay']);
+		$model->gk_category			= addslashes($_POST['info']['category']);
+		$model->gk_fontsize			= addslashes($_POST['info']['fontSize']);
+		$model->gk_partialpath		= addslashes($_POST['info']['partialPath']);
+		$model->gk_showoncreation	= addslashes($_POST['info']['showOnCreation']);
+		$model->gk_showtooltip		= addslashes($_POST['info']['showToolTip']);
+		$model->gk_tooltiptitle		= addslashes($_POST['info']['tooltipTitle']);
+		$model->gk_tooltipbody		= addslashes($_POST['info']['tooltipBody']);
+		$model->gk_type				= addslashes($_POST['info']['type']);
 
 		if ($model->save(false)) {
-			$arr['success'] = true;
-			$arr['message'] = '';
+			$arr['success']	= true;
+			$arr['message']	= '';
+			//$arr['id']		= $model->id;
+			//$arr['post']	= json_encode($_POST);
 		} else {
 			$arr['success'] = false;
 			$arr['message'] = 'Error. Changes were not saved.';
