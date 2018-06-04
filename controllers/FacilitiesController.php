@@ -192,8 +192,14 @@ class FacilitiesController extends Controller
 				and room_name not like '%fac%'
 				and room_name not like '%seat%'
 				and room_name not like '%server%'
-				and room_name not like '%studio%'
+				and room_name not like '%studio%' ";
 
+		if ($_GET['building'] != '') {
+			$bldg = addslashes($_GET['building']);
+			$sql .= " AND bldg_abbre = '$bldg' ";
+		}
+
+		$sql .= "
 			group by bldg_abbre, room_name, floor
 
 			order by
@@ -205,10 +211,10 @@ class FacilitiesController extends Controller
 
 			";
 
-			if ($_GET['limit'] > '0') {
-				$limit = addslashes($_GET['limit']);
-				$sql .= "limit $limit";
-			}
+		if ($_GET['limit'] > '0') {
+			$limit = addslashes($_GET['limit']);
+			$sql .= "limit $limit";
+		}
 
 		$connection = Yii::$app->getDb();
 		$command = $connection->createCommand($sql);
@@ -282,7 +288,9 @@ class FacilitiesController extends Controller
 
 			}
 		} else {
-			$out[] = 'no match';
+			$out['success'] = false;
+			$out['message'] = 'no matches';
+			$out['sql'] = $sql;
 		}
 
 		// 	echo '<pre>';
