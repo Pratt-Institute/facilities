@@ -163,6 +163,7 @@ class FacilitiesController extends Controller
 
     	header("Access-Control-Allow-Origin: *");
 
+		/*
 		$sql = "
     		select * from facilities
 				where space_type not in (7500,7700,7600)
@@ -193,27 +194,57 @@ class FacilitiesController extends Controller
 				and room_name not like '%seat%'
 				and room_name not like '%server%'
 				and room_name not like '%studio%' ";
+		*/
+
+		$sql = "
+    		select * from facilities
+				where space_type not in (7500,7700,7600)
+				and department not in ('CIRCULATION','INACTIVE','UNUSABLE')
+				and room_name != ''
+				and room_name not like '%storage%'
+				and room_name not like '%corr%'
+				and room_name not like '%cl.%'
+				and room_name not like '% cl%'
+				and room_name not like '%mech%'
+				and room_name not like '%inactive%'
+				and room_name not like '%tele%'
+				and room_name not like '%equip%'
+				and room_name not like '%closet%'
+				and room_name not like '%elec%'
+				and room_name not like '%lobby%'
+				and room_name not like '%mech%'
+				and room_name not like '%shower%'
+				and room_name not like '%switch%'
+				and room_name not like '%janit%'
+				and room_name not like '%server%'
+				 ";
+
+		// 	and room_name != 'office'
+		// 	and room_name not like '%studio%'
+		// 	and room_name not like '%asso%'
+		// 	and room_name not like '%tech%'
+		// 	and room_name not like '%booth%'
+		// 	and room_name not like '%cubicle%'
+		// 	and room_name not like '%ass\'t%'
+		// 	and room_name not like '%fac%'
+		// 	and room_name not like '%seat%'
 
 		if ($_GET['building'] != '') {
 			$bldg = addslashes($_GET['building']);
 			$sql .= " AND bldg_abbre = '$bldg' ";
 		}
 
-		$sql .= "
-			group by bldg_abbre, room_name, floor
+		if ($_GET['webapp']=='display') {
+			$sql .= " AND gk_display = 'Y' ";
+		}
 
-			order by
-				bldg_abbre asc,
-				room_name asc,
-				floor asc,
-				new_room_no asc,
-				department asc
+		$sql .= " group by bldg_abbre, room_name, floor ";
 
-			";
+		$sql .= " order by bldg_abbre asc, room_name asc, floor asc, new_room_no asc, department asc ";
 
 		if ($_GET['limit'] > '0') {
 			$limit = addslashes($_GET['limit']);
-			$sql .= "limit $limit";
+			$sql .= " limit $limit ";
 		}
 
 		$connection = Yii::$app->getDb();
@@ -279,7 +310,7 @@ class FacilitiesController extends Controller
 				$out['features'][$key]['user_properties']['bldgAbbr']		= trim($value['bldg_abbre']);
 				$out['features'][$key]['user_properties']['newRoomNo']		= trim($value['new_room_no']);
 
-				if ($_GET['webapp']=='map_manager') {
+				if ($_GET['webapp']=='manage') {
 					$value['gk_display'] = 'Y';
 				}
 
