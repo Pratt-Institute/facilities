@@ -3,9 +3,21 @@
 div.container {
 	/*width: auto !important;
 	min-width: 970px !important;*/
-	width: 1250px !important;
+	width: 1450px !important;
+	/*display:inline-block;*/
+	width: auto;
 	font-size: 80% !important;
 	white-space: nowrap !important;
+}
+
+div.facilities-index {
+	display:inline-block;
+	width: auto;
+}
+
+div.grid-view {
+	display:inline-block;
+	width: auto;
 }
 
 table.table {
@@ -37,9 +49,9 @@ $this->params['breadcrumbs'][] = $this->title;
     <h1><?= Html::encode($this->title) ?></h1>
     <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
 
-    <p>
+    <!--<p>
         <?= Html::a('Create Facilities', ['create'], ['class' => 'btn btn-success']) ?>
-    </p>
+    </p>-->
 
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
@@ -74,7 +86,29 @@ $this->params['breadcrumbs'][] = $this->title;
             'major_category',
             'functional_category',
             'functional_title',
-            'on_off_campus',
+            //'on_off_campus',
+
+			// 	[
+			// 		'class' => 'yii\grid\CheckboxColumn',
+			// 		'checkboxOptions' => [
+			// 			'onclick' => 'js:toggleMapDisplay(this)',
+			// 			'checked' => function ($model){
+			// 				return false;
+			// 				//($model->gk_display=='Y'?true:false)
+			// 			}
+			// 		]
+			// 	],
+
+            [
+            	'class' => 'yii\grid\CheckboxColumn',
+            	'checkboxOptions' => function($model, $key, $index, $widget) {
+            		return [
+            			'onclick' => 'js:toggleMapDisplay(this)',
+            			'checked' => ($model->gk_display=='Y'?true:false)
+            		];
+            	},
+            	'header' => false,
+            ],
 
             [
             	'class' => 'yii\grid\ActionColumn',
@@ -96,3 +130,31 @@ $this->params['breadcrumbs'][] = $this->title;
         ],
     ]); ?>
 </div>
+
+<script>
+
+function toggleMapDisplay(obj) {
+
+	//alert( $(obj).closest('tr').attr('data-key') );
+	var display = 'N';
+	ckb = $(obj).is(':checked');
+	if (ckb == true) {
+		display = 'Y';
+	}
+
+	$.ajax({
+		url: "http://localhost/facilities/toggle",
+		data: {
+			id: $(obj).closest('tr').attr('data-key'),
+			display: display
+		},
+		type: "POST",
+		//beforeSend: function(xhr){xhr.setRequestHeader('X-Test-Header', 'test-value');},
+		success: function(ret) {
+			console.log(ret)
+		}
+	});
+
+}
+
+</script>

@@ -341,9 +341,30 @@ class FacilitiesController extends Controller
 
     }
 
+    public function actionToggle() {
+
+    	$sql = " UPDATE facilities SET gk_display = '".addslashes($_POST['display'])."' WHERE id = '".addslashes($_POST['id'])."' ";
+
+		try {
+		    $connection = Yii::$app->getDb();
+			$command = $connection->createCommand($sql);
+			$result = $command->query();
+			$arr['success'] = true;
+			$arr['message'] = '';
+		} catch (\yii\db\Exception $e) {
+			$arr['success'] = true;
+			$arr['message'] = $e;
+		}
+
+		header('Content-Type: application/json');
+		echo json_encode($arr);
+		die();
+
+    }
+
     public function actionLookup() {
 
-    	die();
+    	//die();
 
     	if (@$_GET['field']=='') {
     		$out[] = 'no match';
@@ -381,7 +402,7 @@ class FacilitiesController extends Controller
      */
     public function actionIndex()
     {
-    	die();
+    	//die();
 
         $searchModel = new FacilitiesSearch();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -400,7 +421,7 @@ class FacilitiesController extends Controller
      */
     public function actionView($id)
     {
-    	die();
+    	//die();
 
         return $this->render('view', [
             'model' => $this->findModel($id),
@@ -436,7 +457,7 @@ class FacilitiesController extends Controller
      */
     public function actionUpdate($id)
     {
-    	die();
+    	//die();
 
         $model = $this->findModel($id);
 
