@@ -239,6 +239,10 @@ class FacilitiesController extends Controller
 			$sql .= " AND gk_display = 'Y' ";
 		}
 
+		if ($_GET['webapp']!='manage') {
+			$sql .= " AND gk_display = 'Y' ";
+		}
+
 		//$sql .= " group by bldg_abbre, room_name, floor ";
 
 		$sql .= " order by bldg_abbre asc, room_name asc, floor asc, new_room_no asc, department asc ";

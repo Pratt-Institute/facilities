@@ -48,7 +48,7 @@ class FacilitiesSearch extends Facilities
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
             'pagination' => [
-				'pageSize' => 10,
+				'pageSize' => 600,
 			],
         ]);
 

@@ -25,7 +25,7 @@ table.table {
 }
 
 td {
-	max-width: 125px !important;
+	max-width: 175px !important;
 	overflow: hidden !important;
 	text-overflow: ellipsis !important;
 }
