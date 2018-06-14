@@ -111,16 +111,27 @@ class FacilitiesController extends Controller
 
 	}
 
+	private function checkRemote($remote) {
+
+		if (strpos($remote, ALLOWED_IPS) === false) {
+			$arr['success'] = false;
+			$arr['message'] = 'Error. Remote address not recognized.';
+			echo json_encode($arr);
+			die();
+		} else {
+			return true;
+		}
+	}
+
 	public function actionPut() {
 
 		$this->doLogEntry();
 		$this->checkToken();
+		$remote = $this->checkRemote($_SERVER['REMOTE_ADDR']);
 
     	header("Access-Control-Allow-Origin: *");
 
     	$model = $this->findModel($_POST['id']);
-
-		header('Content-Type: application/json');
 
 		$model->accessible			= addslashes($_POST['info']['accessible']);
 		/// $model->bldg_abbre			= addslashes($_POST['info']['bldgAbbr']);
@@ -146,13 +157,15 @@ class FacilitiesController extends Controller
 		if ($model->save(false)) {
 			$arr['success']	= true;
 			$arr['message']	= '';
-			//$arr['id']		= $model->id;
+			$arr['remote']	= $remote;
+			//$arr['id']	= $model->id;
 			//$arr['post']	= json_encode($_POST);
 		} else {
 			$arr['success'] = false;
 			$arr['message'] = 'Error. Changes were not saved.';
 		}
 
+		header('Content-Type: application/json');
 		echo json_encode($arr);
 		die();
 	}
@@ -163,39 +176,6 @@ class FacilitiesController extends Controller
 		$this->checkToken();
 
     	header("Access-Control-Allow-Origin: *");
-
-		/*
-		$sql = "
-    		select * from facilities
-				where space_type not in (7500,7700,7600)
-				and department not in ('CIRCULATION','INACTIVE','UNUSABLE')
-				and room_name != ''
-				and room_name != 'office'
-				and room_name not like '%storage%'
-				and room_name not like '%corr%'
-				and room_name not like '%cl.%'
-				and room_name not like '% cl%'
-				and room_name not like '%mech%'
-				and room_name not like '%inactive%'
-				and room_name not like '%cubicle%'
-				and room_name not like '%tele%'
-				and room_name not like '%equip%'
-				and room_name not like '%closet%'
-				and room_name not like '%elec%'
-				and room_name not like '%lobby%'
-				and room_name not like '%mech%'
-				and room_name not like '%shower%'
-				and room_name not like '%booth%'
-				and room_name not like '%switch%'
-				and room_name not like '%janit%'
-				and room_name not like '%ass\'t%'
-				and room_name not like '%asso%'
-				and room_name not like '%tech%'
-				and room_name not like '%fac%'
-				and room_name not like '%seat%'
-				and room_name not like '%server%'
-				and room_name not like '%studio%' ";
-		*/
 
 		$sql = "
     		select * from facilities
@@ -273,6 +253,13 @@ class FacilitiesController extends Controller
 					$value['floor'] = '1';
 				}
 
+				$value['room_name'] = ucwords(strtolower($value['room_name']));
+				//$value['room_name'] = 'hello';
+
+				if (trim($value['space_type']) == '7701') {
+					$value['room_name'] = 'Restroom';
+				}
+
 				$value['bldg_code'] = str_pad($value['bldg_code'], 4, '0', STR_PAD_LEFT);
 				$value['floor'] = str_pad($value['floor'], 4, '0', STR_PAD_LEFT);
 
@@ -307,8 +294,8 @@ class FacilitiesController extends Controller
 				//$out['features'][$key]['geometry']['coordinates'][]		= -94.58123779296875;
 				//$out['features'][$key]['geometry']['coordinates'][]		= 39.045143127441406;
 
-				$out['features'][$key]['geometry']['coordinates'][]		= floatval(-94.581 . rand(10000000000, 99999999999));
-				$out['features'][$key]['geometry']['coordinates'][]		= floatval( 39.045 . rand(100000000000,999999999999));
+				$out['features'][$key]['geometry']['coordinates'][]		= floatval(-94.58 . rand(10000000000, 99999999999));
+				$out['features'][$key]['geometry']['coordinates'][]		= floatval( 39.04 . rand(100000000000,999999999999));
 
 				if (trim($value['new_room_no']) == '') {
 					$value['new_room_no'] = '-';

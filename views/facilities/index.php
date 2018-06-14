@@ -3,7 +3,7 @@
 div.container {
 	/*width: auto !important;
 	min-width: 970px !important;*/
-	width: 1450px !important;
+	width: 1630px !important;
 	/*display:inline-block;*/
 	width: auto;
 	font-size: 80% !important;
@@ -72,7 +72,7 @@ $this->params['breadcrumbs'][] = $this->title;
             //'station_count',
             //'sf',
             //'sf_fte',
-            //'space_type',
+            'space_type',
             'room_name',
             //'donor_space',
             //'av',
