@@ -311,6 +311,7 @@ class FacilitiesController extends Controller
 				$out['features'][$key]['user_properties']['roomNo']			= trim($value['room_no']);
 				$out['features'][$key]['user_properties']['newRoomNo']		= trim($value['new_room_no']);
 				$out['features'][$key]['user_properties']['gkDisplay']		= trim($value['gk_display']);
+				$out['features'][$key]['user_properties']['gkDepartment']		= trim($value['gk_department']);
 				//$out['features'][$key]['user_properties']['count']	= $rowCount;
 
 			}
