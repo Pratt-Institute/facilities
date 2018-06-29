@@ -181,7 +181,12 @@ class FacilitiesController extends Controller
     		select * from facilities
 				where space_type not in (7500,7700,7600)
 				and department not in ('CIRCULATION','INACTIVE','UNUSABLE')
+
 				and room_name != ''
+				and room_name != 'office'
+
+				and floor not like '%bsm%'
+
 				and room_name not like '%storage%'
 				and room_name not like '%corr%'
 				and room_name not like '%cl.%'
@@ -198,13 +203,12 @@ class FacilitiesController extends Controller
 				and room_name not like '%janit%'
 				and room_name not like '%server%'
 
-				and room_name != 'office'
 				and room_name not like '%studio%'
 				and room_name not like '%asso%'
 				and room_name not like '%tech%'
 				and room_name not like '%booth%'
 				and room_name not like '%cubicle%'
-				and room_name not like '%ass\'t%'
+
 				and room_name not like '%fac%'
 				and room_name not like '%seat%'
 
