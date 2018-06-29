@@ -193,22 +193,24 @@ class FacilitiesController extends Controller
 				and room_name not like '%closet%'
 				and room_name not like '%elec%'
 				and room_name not like '%lobby%'
-				and room_name not like '%mech%'
 				and room_name not like '%shower%'
 				and room_name not like '%switch%'
 				and room_name not like '%janit%'
 				and room_name not like '%server%'
+
+				and room_name != 'office'
+				and room_name not like '%studio%'
+				and room_name not like '%asso%'
+				and room_name not like '%tech%'
+				and room_name not like '%booth%'
+				and room_name not like '%cubicle%'
+				and room_name not like '%ass\'t%'
+				and room_name not like '%fac%'
+				and room_name not like '%seat%'
+
 				 ";
 
-		// 	and room_name != 'office'
-		// 	and room_name not like '%studio%'
-		// 	and room_name not like '%asso%'
-		// 	and room_name not like '%tech%'
-		// 	and room_name not like '%booth%'
-		// 	and room_name not like '%cubicle%'
-		// 	and room_name not like '%ass\'t%'
-		// 	and room_name not like '%fac%'
-		// 	and room_name not like '%seat%'
+
 
 		if ($_GET['building'] != '') {
 			$bldg = addslashes($_GET['building']);
@@ -216,14 +218,14 @@ class FacilitiesController extends Controller
 		}
 
 		if ($_GET['webapp']=='display') {
-			$sql .= " AND gk_display = 'Y' ";
+			$sql .= " AND gk_display != 'N' ";
 		}
 
 		if ($_GET['webapp']!='manage') {
-			$sql .= " AND gk_display = 'Y' ";
+			$sql .= " AND gk_display != 'N' ";
 		}
 
-		//$sql .= " group by bldg_abbre, room_name, floor ";
+		$sql .= " group by bldg_abbre, floor, room_name, gk_department ";
 
 		$sql .= " order by bldg_abbre asc, room_name asc, floor asc, new_room_no asc, department asc ";
 
@@ -311,7 +313,8 @@ class FacilitiesController extends Controller
 				$out['features'][$key]['user_properties']['roomNo']			= trim($value['room_no']);
 				$out['features'][$key]['user_properties']['newRoomNo']		= trim($value['new_room_no']);
 				$out['features'][$key]['user_properties']['gkDisplay']		= trim($value['gk_display']);
-				$out['features'][$key]['user_properties']['gkDepartment']		= trim($value['gk_department']);
+				$out['features'][$key]['user_properties']['gkDepartment']	= trim($value['gk_department']);
+				//$out['features'][$key]['user_properties']['sql']	= $sql;
 				//$out['features'][$key]['user_properties']['count']	= $rowCount;
 
 			}
