@@ -308,7 +308,7 @@ class FacilitiesController extends Controller
 
 				//$out['features'][$i]['properties']['base64']			= '';
 
-				$out['features'][$i]['properties']['mapLabelId']		= intval(trim($value['id']));
+				$out['features'][$i]['properties']['mapLabelId']		= trim($value['id']);
 
 				$out['features'][$i]['properties']['category']			= trim($value['gk_category'])=='' ? 'Label' : trim($value['gk_category']);
 				$out['features'][$i]['properties']['fontSize']			= trim($value['gk_fontsize'])<'2' ? intval(24) : intval(trim($value['gk_fontsize']));
@@ -338,6 +338,7 @@ class FacilitiesController extends Controller
 					$value['gk_display'] = '-';
 				}
 
+				$out['features'][$i]['user_properties']['recordId']			= trim($value['id']);
 				$out['features'][$i]['user_properties']['accessible']		= trim($value['accessible']);
 				$out['features'][$i]['user_properties']['bldgName']			= trim($value['bldg_name']);
 				$out['features'][$i]['user_properties']['bldgAbbr']			= trim($value['bldg_abbre']);
