@@ -173,48 +173,49 @@ class FacilitiesController extends Controller
     public function actionGet() {
 
 		$this->doLogEntry();
-		$this->checkToken();
+//		$this->checkToken();
 
     	header("Access-Control-Allow-Origin: *");
 
 		$sql = "
-    		select * from facilities
-				where space_type not in (7500,7700,7600)
-				and department not in ('CIRCULATION','INACTIVE','UNUSABLE')
+		select * from facilities
+		where space_type not in (7500,7700,7600)
+		and department not in ('CIRCULATION','INACTIVE','UNUSABLE')
 
-				and room_name != ''
-				and room_name != 'office'
+		and room_name != ''
+		and room_name != 'office'
 
-				and floor not like '%bsm%'
+		and floor not like '%bsm%'
 
-				and room_name not like '%storage%'
-				and room_name not like '%corr%'
-				and room_name not like '%cl.%'
-				and room_name not like '% cl%'
-				and room_name not like '%mech%'
-				and room_name not like '%inactive%'
-				and room_name not like '%tele%'
-				and room_name not like '%equip%'
-				and room_name not like '%closet%'
-				and room_name not like '%elec%'
-				and room_name not like '%lobby%'
-				and room_name not like '%shower%'
-				and room_name not like '%switch%'
-				and room_name not like '%janit%'
-				and room_name not like '%server%'
+		and room_name not like '%men%'
+		and room_name not like '%ele%'
+		and room_name not like '%class%'
+		and room_name not like '%storage%'
+		and room_name not like '%corr%'
+		and room_name not like '%cl.%'
+		and room_name not like '% cl%'
+		and room_name not like '%mech%'
+		and room_name not like '%inactive%'
+		and room_name not like '%tele%'
+		and room_name not like '%equip%'
+		and room_name not like '%closet%'
+		and room_name not like '%elec%'
+		and room_name not like '%lobby%'
+		and room_name not like '%shower%'
+		and room_name not like '%switch%'
+		and room_name not like '%janit%'
+		and room_name not like '%server%'
 
-				and room_name not like '%studio%'
-				and room_name not like '%asso%'
-				and room_name not like '%tech%'
-				and room_name not like '%booth%'
-				and room_name not like '%cubicle%'
+		and room_name not like '%studio%'
+		and room_name not like '%asso%'
+		and room_name not like '%tech%'
+		and room_name not like '%booth%'
+		and room_name not like '%cubicle%'
 
-				and room_name not like '%fac%'
-				and room_name not like '%seat%'
+		/*and room_name not like '%fac%'*/
+		and room_name not like '%seat%'
 
-				 ";
-
-
+		";
 
 		if ($_GET['building'] != '') {
 			$bldg = addslashes($_GET['building']);
@@ -229,10 +230,11 @@ class FacilitiesController extends Controller
 			$sql .= " AND gk_display != 'N' ";
 		}
 
-		$sql .= " group by bldg_abbre, floor, room_name, gk_department ";
+		$sql .= " group by bldg_abbre, floor, gk_department, department, room_name ";
 
 		$sql .= " order by bldg_abbre asc, room_name asc, floor asc, new_room_no asc, department asc ";
 
+		//$_GET['limit'] = '10';
 		if ($_GET['limit'] > '0') {
 			$limit = addslashes($_GET['limit']);
 			$sql .= " limit $limit ";
@@ -253,6 +255,15 @@ class FacilitiesController extends Controller
 
 			foreach($result as $key=>$value) {
 
+				foreach($value as $key2=>$value2) {
+					$value2 = trim($value2);
+					$value2 = str_replace("'", '', $value2);
+					$value2 = str_replace('"', '', $value2);
+					$value2 = mb_convert_encoding($value2, 'UTF-8', 'UTF-8');
+					$value[$key2] = addslashes($value2);
+					$value[$key2] = str_replace("\\\\", "\\", $value[$key2]);
+				}
+
 				$value['floor'] = preg_replace('/[^0-9,.]/', '', trim($value['floor']));
 
 				if (trim($value['floor']) == '') {
@@ -266,42 +277,58 @@ class FacilitiesController extends Controller
 					$value['room_name'] = 'Restroom';
 				}
 
+				if (trim($value['gk_department']) == '' && $value['gk_display'] != 'Y') {
+					$skip = false;
+					$needles[] = 'fac';
+					$needles[] = 'ofc';
+					$needles[] = 'conf';
+					foreach($needles as $needle) {
+						$pos = stripos('_'.$value['room_name'], $needle);
+						if ($pos > 0) {
+							$skip = true;
+						}
+					}
+					if ($skip) {
+						continue;
+					}
+				}
+
 				$value['bldg_code'] = str_pad($value['bldg_code'], 4, '0', STR_PAD_LEFT);
 				$value['floor'] = str_pad($value['floor'], 4, '0', STR_PAD_LEFT);
 
-				$out['features'][$key]['type'] = 'Feature';
+				$out['features'][$i]['type'] = 'Feature';
 
-				//$out['features'][$key]['properties']['buildingId']		= trim($value['bldg_code']);
-				$out['features'][$key]['properties']['buildingId']		= '0001';
-				$out['features'][$key]['properties']['floorId']			= trim($value['floor']);
-				$out['features'][$key]['properties']['label']			= trim($value['room_name']);
+				//$out['features'][$i]['properties']['buildingId']		= trim($value['bldg_code']);
+				$out['features'][$i]['properties']['buildingId']		= '0001';
+				$out['features'][$i]['properties']['floorId']			= trim($value['floor']);
+				$out['features'][$i]['properties']['label']				= trim($value['room_name']);
 
-				$out['features'][$key]['properties']['location']		= '';
-				$out['features'][$key]['properties']['type']			= '';
+				$out['features'][$i]['properties']['location']			= '';
+				$out['features'][$i]['properties']['type']				= '';
 
-				//$out['features'][$key]['properties']['base64']			= '';
+				//$out['features'][$i]['properties']['base64']			= '';
 
-				$out['features'][$key]['properties']['mapLabelId']		= intval(trim($value['id']));
+				$out['features'][$i]['properties']['mapLabelId']		= intval(trim($value['id']));
 
-				$out['features'][$key]['properties']['category']		= trim($value['gk_category'])=='' ? 'Label' : trim($value['gk_category']);
-				$out['features'][$key]['properties']['fontSize']		= trim($value['gk_fontsize'])<'2' ? intval(24) : intval(trim($value['gk_fontsize']));
-				$out['features'][$key]['properties']['partialPath']		= trim($value['gk_partialpath'])=='' ? 'Information' : trim($value['gk_partialpath']);
-				$out['features'][$key]['properties']['showOnCreation']	= trim($value['gk_showoncreation'])=='' ? true : trim($value['gk_showoncreation']);
-				$out['features'][$key]['properties']['showToolTip']		= trim($value['gk_showtooltip'])=='' ? false : trim($value['gk_showtooltip']);
-				$out['features'][$key]['properties']['tooltipTitle']	= trim($value['gk_tooltiptitle'])=='' ? '' : trim($value['gk_tooltiptitle']);
-				$out['features'][$key]['properties']['tooltipBody']		= trim($value['gk_tooltipbody'])=='' ? '' : trim($value['gk_tooltipbody']);
-				$out['features'][$key]['properties']['type']			= trim($value['gk_type'])=='' ? 'IconWithText' : trim($value['gk_type']);
+				$out['features'][$i]['properties']['category']			= trim($value['gk_category'])=='' ? 'Label' : trim($value['gk_category']);
+				$out['features'][$i]['properties']['fontSize']			= trim($value['gk_fontsize'])<'2' ? intval(24) : intval(trim($value['gk_fontsize']));
+				$out['features'][$i]['properties']['partialPath']		= trim($value['gk_partialpath'])=='' ? 'Information' : trim($value['gk_partialpath']);
+				$out['features'][$i]['properties']['showOnCreation']	= trim($value['gk_showoncreation'])=='' ? false : trim($value['gk_showoncreation']);
+				$out['features'][$i]['properties']['showToolTip']		= trim($value['gk_showtooltip'])=='' ? false : trim($value['gk_showtooltip']);
+				$out['features'][$i]['properties']['tooltipTitle']		= trim($value['gk_tooltiptitle'])=='' ? '' : trim($value['gk_tooltiptitle']);
+				$out['features'][$i]['properties']['tooltipBody']		= trim($value['gk_tooltipbody'])=='' ? '' : trim($value['gk_tooltipbody']);
+				$out['features'][$i]['properties']['type']				= trim($value['gk_type'])=='' ? 'IconWithText' : trim($value['gk_type']);
 
-				$out['features'][$key]['geometry']['type']				= 'Point';
+				$out['features'][$i]['geometry']['type']				= 'Point';
 
-				//$out['features'][$key]['geometry']['coordinates'][]		= trim($value['longitude']);
-				//$out['features'][$key]['geometry']['coordinates'][]		= trim($value['latitude']);
+				//$out['features'][$i]['geometry']['coordinates'][]		= trim($value['longitude']);
+				//$out['features'][$i]['geometry']['coordinates'][]		= trim($value['latitude']);
 
-				//$out['features'][$key]['geometry']['coordinates'][]		= -94.58123779296875;
-				//$out['features'][$key]['geometry']['coordinates'][]		= 39.045143127441406;
+				//$out['features'][$i]['geometry']['coordinates'][]		= -94.58123779296875;
+				//$out['features'][$i]['geometry']['coordinates'][]		= 39.045143127441406;
 
-				$out['features'][$key]['geometry']['coordinates'][]		= floatval(-94.58 . rand(10000000000, 99999999999));
-				$out['features'][$key]['geometry']['coordinates'][]		= floatval( 39.04 . rand(100000000000,999999999999));
+				$out['features'][$i]['geometry']['coordinates'][]		= floatval(-94.58 . rand(10000000000, 99999999999));
+				$out['features'][$i]['geometry']['coordinates'][]		= floatval( 39.04 . rand(100000000000,999999999999));
 
 				if (trim($value['new_room_no']) == '') {
 					$value['new_room_no'] = '-';
@@ -311,15 +338,17 @@ class FacilitiesController extends Controller
 					$value['gk_display'] = '-';
 				}
 
-				$out['features'][$key]['user_properties']['accessible']		= trim($value['accessible']);
-				$out['features'][$key]['user_properties']['bldgName']		= trim($value['bldg_name']);
-				$out['features'][$key]['user_properties']['bldgAbbr']		= trim($value['bldg_abbre']);
-				$out['features'][$key]['user_properties']['roomNo']			= trim($value['room_no']);
-				$out['features'][$key]['user_properties']['newRoomNo']		= trim($value['new_room_no']);
-				$out['features'][$key]['user_properties']['gkDisplay']		= trim($value['gk_display']);
-				$out['features'][$key]['user_properties']['gkDepartment']	= trim($value['gk_department']);
-				//$out['features'][$key]['user_properties']['sql']	= $sql;
-				//$out['features'][$key]['user_properties']['count']	= $rowCount;
+				$out['features'][$i]['user_properties']['accessible']		= trim($value['accessible']);
+				$out['features'][$i]['user_properties']['bldgName']			= trim($value['bldg_name']);
+				$out['features'][$i]['user_properties']['bldgAbbr']			= trim($value['bldg_abbre']);
+				$out['features'][$i]['user_properties']['roomNo']			= trim($value['room_no']);
+				$out['features'][$i]['user_properties']['newRoomNo']		= trim($value['new_room_no']);
+				$out['features'][$i]['user_properties']['gkDisplay']		= trim($value['gk_display']);
+				$out['features'][$i]['user_properties']['gkDepartment']		= trim($value['gk_department']);
+				$out['features'][$i]['user_properties']['count']			= $i . ' ' . $rowCount;
+				//$out['features'][$i]['user_properties']['sql']			= $sql;
+
+				$i++;
 
 			}
 		} else {
