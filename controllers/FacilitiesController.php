@@ -173,13 +173,18 @@ class FacilitiesController extends Controller
     public function actionGet() {
 
 		$this->doLogEntry();
-//		$this->checkToken();
+		$this->checkToken();
 
     	header("Access-Control-Allow-Origin: *");
 
 		$sql = "
 		select * from facilities
-		where space_type not in (7500,7700,7600)
+		where gk_display = 'Y'
+		or gk_department != ''
+
+
+		/*
+		space_type not in (7500,7700,7600)
 		and department not in ('CIRCULATION','INACTIVE','UNUSABLE')
 
 		and room_name != ''
@@ -187,7 +192,6 @@ class FacilitiesController extends Controller
 
 		and floor not like '%bsm%'
 
-		and room_name not like '%men%'
 		and room_name not like '%ele%'
 		and room_name not like '%class%'
 		and room_name not like '%storage%'
@@ -205,15 +209,17 @@ class FacilitiesController extends Controller
 		and room_name not like '%switch%'
 		and room_name not like '%janit%'
 		and room_name not like '%server%'
-
 		and room_name not like '%studio%'
 		and room_name not like '%asso%'
-		and room_name not like '%tech%'
 		and room_name not like '%booth%'
 		and room_name not like '%cubicle%'
-
-		/*and room_name not like '%fac%'*/
 		and room_name not like '%seat%'
+
+
+		and room_name not like '%men%'
+		and room_name not like '%fac%'
+		and room_name not like '%tech%'
+		*/
 
 		";
 
@@ -257,10 +263,10 @@ class FacilitiesController extends Controller
 
 				foreach($value as $key2=>$value2) {
 					$value2 = trim($value2);
-					$value2 = str_replace("'", '', $value2);
-					$value2 = str_replace('"', '', $value2);
+					//$value2 = str_replace("'", '', $value2);
+					//$value2 = str_replace('"', '', $value2);
 					$value2 = mb_convert_encoding($value2, 'UTF-8', 'UTF-8');
-					$value[$key2] = addslashes($value2);
+					//$value[$key2] = addslashes($value2);
 					$value[$key2] = str_replace("\\\\", "\\", $value[$key2]);
 				}
 
@@ -277,21 +283,22 @@ class FacilitiesController extends Controller
 					$value['room_name'] = 'Restroom';
 				}
 
-				if (trim($value['gk_department']) == '' && $value['gk_display'] != 'Y') {
-					$skip = false;
-					$needles[] = 'fac';
-					$needles[] = 'ofc';
-					$needles[] = 'conf';
-					foreach($needles as $needle) {
-						$pos = stripos('_'.$value['room_name'], $needle);
-						if ($pos > 0) {
-							$skip = true;
-						}
-					}
-					if ($skip) {
-						continue;
-					}
-				}
+				// 	if (trim($value['gk_department']) == '' && $value['gk_display'] != 'Y') {
+				// 		$skip = false;
+				// 		$needles[] = 'fac';
+				// 		$needles[] = 'ofc';
+				// 		$needles[] = 'conf';
+				// 		$needles[] = 'wom';
+				// 		foreach($needles as $needle) {
+				// 			$pos = stripos('_'.$value['room_name'], $needle);
+				// 			if ($pos > 0) {
+				// 				$skip = true;
+				// 			}
+				// 		}
+				// 		if ($skip) {
+				// 			continue;
+				// 		}
+				// 	}
 
 				$value['bldg_code'] = str_pad($value['bldg_code'], 4, '0', STR_PAD_LEFT);
 				$value['floor'] = str_pad($value['floor'], 4, '0', STR_PAD_LEFT);
@@ -300,7 +307,8 @@ class FacilitiesController extends Controller
 
 				//$out['features'][$i]['properties']['buildingId']		= trim($value['bldg_code']);
 				$out['features'][$i]['properties']['buildingId']		= '0001';
-				$out['features'][$i]['properties']['floorId']			= trim($value['floor']);
+				//$out['features'][$i]['properties']['floorId']			= trim($value['floor']);
+				$out['features'][$i]['properties']['floorId']			= '0001';
 				$out['features'][$i]['properties']['label']				= trim($value['room_name']);
 
 				$out['features'][$i]['properties']['location']			= '';
@@ -342,7 +350,7 @@ class FacilitiesController extends Controller
 				$out['features'][$i]['user_properties']['accessible']		= trim($value['accessible']);
 				$out['features'][$i]['user_properties']['bldgName']			= trim($value['bldg_name']);
 				$out['features'][$i]['user_properties']['bldgAbbr']			= trim($value['bldg_abbre']);
-				$out['features'][$i]['user_properties']['roomNo']			= trim($value['room_no']);
+				$out['features'][$i]['user_properties']['roomNo']			= trim($value['room_no'])==''?'1':trim($value['room_no']);
 				$out['features'][$i]['user_properties']['newRoomNo']		= trim($value['new_room_no']);
 				$out['features'][$i]['user_properties']['gkDisplay']		= trim($value['gk_display']);
 				$out['features'][$i]['user_properties']['gkDepartment']		= trim($value['gk_department']);
