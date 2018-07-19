@@ -129,6 +129,7 @@ class FacilitiesController extends Controller
 		$this->checkToken();
 		$remote = $this->checkRemote($_SERVER['REMOTE_ADDR']);
 
+		/* TODO remove this when going live */
     	header("Access-Control-Allow-Origin: *");
 
     	$model = $this->findModel($_POST['id']);
@@ -175,16 +176,19 @@ class FacilitiesController extends Controller
 		$this->doLogEntry();
 		$this->checkToken();
 
+		$posts = json_encode($_REQUEST, true);
+
+		/* TODO remove this when going live */
     	header("Access-Control-Allow-Origin: *");
 
 		$sql = "
 		select * from facilities
 		where gk_display = 'Y'
 		or gk_department != ''
+		or space_type in (1650,7701,7800)
 
 
-		/*
-		space_type not in (7500,7700,7600)
+		and space_type not in (7500,7700,7600)
 		and department not in ('CIRCULATION','INACTIVE','UNUSABLE')
 
 		and room_name != ''
@@ -209,17 +213,11 @@ class FacilitiesController extends Controller
 		and room_name not like '%switch%'
 		and room_name not like '%janit%'
 		and room_name not like '%server%'
-		and room_name not like '%studio%'
-		and room_name not like '%asso%'
 		and room_name not like '%booth%'
 		and room_name not like '%cubicle%'
 		and room_name not like '%seat%'
-
-
-		and room_name not like '%men%'
 		and room_name not like '%fac%'
 		and room_name not like '%tech%'
-		*/
 
 		";
 
@@ -236,7 +234,7 @@ class FacilitiesController extends Controller
 			$sql .= " AND gk_display != 'N' ";
 		}
 
-		$sql .= " group by bldg_abbre, floor, gk_department, department, room_name ";
+		//$sql .= " group by bldg_abbre, floor, gk_department, department, room_name ";
 
 		$sql .= " order by bldg_abbre asc, room_name asc, floor asc, new_room_no asc, department asc ";
 
@@ -263,7 +261,7 @@ class FacilitiesController extends Controller
 
 				foreach($value as $key2=>$value2) {
 					$value2 = trim($value2);
-					//$value2 = str_replace("'", '', $value2);
+					$value[$key2] = str_replace("'", '', $value2);
 					//$value2 = str_replace('"', '', $value2);
 					$value2 = mb_convert_encoding($value2, 'UTF-8', 'UTF-8');
 					//$value[$key2] = addslashes($value2);
@@ -278,10 +276,6 @@ class FacilitiesController extends Controller
 
 				$value['room_name'] = ucwords(strtolower($value['room_name']));
 				//$value['room_name'] = 'hello';
-
-				if (trim($value['space_type']) == '7701') {
-					$value['room_name'] = 'Restroom';
-				}
 
 				// 	if (trim($value['gk_department']) == '' && $value['gk_display'] != 'Y') {
 				// 		$skip = false;
@@ -311,21 +305,37 @@ class FacilitiesController extends Controller
 				$out['features'][$i]['properties']['floorId']			= '0001';
 				$out['features'][$i]['properties']['label']				= trim($value['room_name']);
 
-				$out['features'][$i]['properties']['location']			= '';
-				$out['features'][$i]['properties']['type']				= '';
-
-				//$out['features'][$i]['properties']['base64']			= '';
-
 				$out['features'][$i]['properties']['mapLabelId']		= trim($value['id']);
 
 				$out['features'][$i]['properties']['category']			= trim($value['gk_category'])=='' ? 'Label' : trim($value['gk_category']);
 				$out['features'][$i]['properties']['fontSize']			= trim($value['gk_fontsize'])<'2' ? intval(24) : intval(trim($value['gk_fontsize']));
-				$out['features'][$i]['properties']['partialPath']		= trim($value['gk_partialpath'])=='' ? 'Information' : trim($value['gk_partialpath']);
-				$out['features'][$i]['properties']['showOnCreation']	= trim($value['gk_showoncreation'])=='' ? false : trim($value['gk_showoncreation']);
-				$out['features'][$i]['properties']['showToolTip']		= trim($value['gk_showtooltip'])=='' ? false : trim($value['gk_showtooltip']);
-				$out['features'][$i]['properties']['tooltipTitle']		= trim($value['gk_tooltiptitle'])=='' ? '' : trim($value['gk_tooltiptitle']);
-				$out['features'][$i]['properties']['tooltipBody']		= trim($value['gk_tooltipbody'])=='' ? '' : trim($value['gk_tooltipbody']);
+				$out['features'][$i]['properties']['showOnCreation']	= trim($value['gk_showoncreation'])=='' ? true : trim($value['gk_showoncreation']);
+				$out['features'][$i]['properties']['showToolTip']		= trim($value['gk_showtooltip'])=='' ? true : trim($value['gk_showtooltip']);
+				$out['features'][$i]['properties']['tooltipTitle']		= trim($value['gk_tooltiptitle'])=='' ? 'tt title' : trim($value['gk_tooltiptitle']);
+				$out['features'][$i]['properties']['tooltipBody']		= trim($value['gk_tooltipbody'])=='' ? 'tt body' : trim($value['gk_tooltipbody']);
+
+				$out['features'][$i]['properties']['location']			= 'URL';
+
 				$out['features'][$i]['properties']['type']				= trim($value['gk_type'])=='' ? 'IconWithText' : trim($value['gk_type']);
+
+				//$out['features'][$i]['properties']['partialPath']		= trim($value['gk_partialpath'])=='' ? 'Information' : trim($value['gk_partialpath']);
+				//$out['features'][$i]['properties']['partialPath']		= 'http://localhost/~iancampbell/nelson_demo/css/icons/ic_admin_info_v2.png';
+				$out['features'][$i]['properties']['partialPath']		= 'css/icons/ic_admin_info_v2.png';
+				//$out['features'][$i]['properties']['base64']			= 'iconDefault';
+
+				if (trim($value['room_name']) == 'Sculpture') {
+					//$out['features'][$i]['properties']['partialPath'] = 'css/icons/ic_admin_camera.png';
+					$out['features'][$i]['properties']['partialPath'] = 'css/icons/ic_artwork.png';
+				}
+
+				// 	if (trim($value['space_type']) == '7701' || trim($value['space_type']) == '7800'|| trim($value['space_type']) == '1650') {
+				// 		$value['room_name'] = 'Restroom';
+				// 	}
+
+				if (trim($value['space_type']) == '7701' || trim($value['space_type']) == '7800'|| trim($value['space_type']) == '1650') {
+					//$value['room_name'] = 'Restroom';
+					$out['features'][$i]['properties']['partialPath'] = 'css/icons/ic_admin_restroom_all.png';
+				}
 
 				$out['features'][$i]['geometry']['type']				= 'Point';
 
@@ -354,8 +364,14 @@ class FacilitiesController extends Controller
 				$out['features'][$i]['user_properties']['newRoomNo']		= trim($value['new_room_no']);
 				$out['features'][$i]['user_properties']['gkDisplay']		= trim($value['gk_display']);
 				$out['features'][$i]['user_properties']['gkDepartment']		= trim($value['gk_department']);
+
+				$out['features'][$i]['user_properties']['gkArtist']			= trim($value['gk_sculpture_artist']);
+				$out['features'][$i]['user_properties']['gkArtName']		= trim($value['gk_sculpture_name']);
+				$out['features'][$i]['user_properties']['gkArtDate']		= trim($value['gk_sculpture_date']);
+
 				$out['features'][$i]['user_properties']['count']			= $i . ' ' . $rowCount;
 				//$out['features'][$i]['user_properties']['sql']			= $sql;
+				//$out['features'][$i]['user_properties']['posts']			= $posts;
 
 				$i++;
 
