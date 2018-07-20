@@ -314,7 +314,8 @@ class FacilitiesController extends Controller
 				$out['features'][$i]['properties']['tooltipTitle']		= trim($value['gk_tooltiptitle'])=='' ? 'tt title' : trim($value['gk_tooltiptitle']);
 				$out['features'][$i]['properties']['tooltipBody']		= trim($value['gk_tooltipbody'])=='' ? 'tt body' : trim($value['gk_tooltipbody']);
 
-				$out['features'][$i]['properties']['location']			= 'URL';
+				//$out['features'][$i]['properties']['location']			= 'URL';
+				$out['features'][$i]['properties']['location']			= '';
 
 				$out['features'][$i]['properties']['type']				= trim($value['gk_type'])=='' ? 'IconWithText' : trim($value['gk_type']);
 
@@ -332,7 +333,8 @@ class FacilitiesController extends Controller
 				// 		$value['room_name'] = 'Restroom';
 				// 	}
 
-				if (trim($value['space_type']) == '7701' || trim($value['space_type']) == '7800'|| trim($value['space_type']) == '1650') {
+				//if (trim($value['space_type']) == '7701' || trim($value['space_type']) == '7800'|| trim($value['space_type']) == '1650') {
+				if (trim($value['space_type']) == '7701') {
 					//$value['room_name'] = 'Restroom';
 					$out['features'][$i]['properties']['partialPath'] = 'css/icons/ic_admin_restroom_all.png';
 				}
@@ -370,6 +372,7 @@ class FacilitiesController extends Controller
 				$out['features'][$i]['user_properties']['gkArtDate']		= trim($value['gk_sculpture_date']);
 
 				$out['features'][$i]['user_properties']['count']			= $i . ' ' . $rowCount;
+				$out['features'][$i]['user_properties']['itemId']			= $i;
 				//$out['features'][$i]['user_properties']['sql']			= $sql;
 				//$out['features'][$i]['user_properties']['posts']			= $posts;
 
