@@ -183,19 +183,16 @@ class FacilitiesController extends Controller
 
 		$sql = "
 		select * from facilities
-		where gk_display = 'Y'
-		or gk_department != ''
-		or space_type in (1650,7701,7800)
 
+		where ( gk_display = 'Y' or gk_department != '' or space_type in (1650,7701,7800) )
 
 		and space_type not in (7500,7700,7600)
+
 		and department not in ('CIRCULATION','INACTIVE','UNUSABLE')
 
 		and room_name != ''
-		and room_name != 'office'
-
+		and gk_display != 'N'
 		and floor not like '%bsm%'
-
 		and room_name not like '%ele%'
 		and room_name not like '%class%'
 		and room_name not like '%storage%'
@@ -216,8 +213,12 @@ class FacilitiesController extends Controller
 		and room_name not like '%booth%'
 		and room_name not like '%cubicle%'
 		and room_name not like '%seat%'
+
+		/*
 		and room_name not like '%fac%'
 		and room_name not like '%tech%'
+		and room_name != 'office'
+		*/
 
 		";
 
@@ -243,6 +244,9 @@ class FacilitiesController extends Controller
 			$limit = addslashes($_GET['limit']);
 			$sql .= " limit $limit ";
 		}
+
+		//echo $sql;
+		//die();
 
 		$connection = Yii::$app->getDb();
 		$command = $connection->createCommand($sql);
