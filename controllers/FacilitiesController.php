@@ -15,7 +15,6 @@ use yii\helpers\Json;
 use yii\web\Response;
 use yii\web\Session;
 
-
 /**
  * FacilitiesController implements the CRUD actions for Facilities model.
  */
@@ -125,6 +124,12 @@ class FacilitiesController extends Controller
 
 	public function actionPut() {
 
+		// 	header('Content-Type: application/json');
+		// 	echo json_encode($_POST);
+		// 	die();
+
+		$arr['post'] = json_encode($_POST);
+
 		$this->doLogEntry();
 		$this->checkToken();
 		$remote = $this->checkRemote($_SERVER['REMOTE_ADDR']);
@@ -140,8 +145,8 @@ class FacilitiesController extends Controller
 		/// $model->bldg_code			= ltrim(addslashes($_POST['info']['buildingId']),'0');
 		/// $model->floor				= ltrim(addslashes($_POST['info']['floorId']),'0');
 		$model->room_name			= addslashes($_POST['info']['label']);
-		/// $model->latitude			= addslashes($_POST['info']['latitude']);
-		/// $model->longitude			= addslashes($_POST['info']['longitude']);
+		$model->latitude			= addslashes($_POST['info']['latitude']);
+		$model->longitude			= addslashes($_POST['info']['longitude']);
 		$model->new_room_no			= addslashes($_POST['info']['newRoomNo']);
 
 		//$model->gk_display			= addslashes($_POST['info']['gkDisplay']);
@@ -154,6 +159,9 @@ class FacilitiesController extends Controller
 		$model->gk_tooltiptitle		= addslashes($_POST['info']['tooltipTitle']);
 		$model->gk_tooltipbody		= addslashes($_POST['info']['tooltipBody']);
 		$model->gk_type				= addslashes($_POST['info']['type']);
+
+		$model->gk_bldg_id		= addslashes($_POST['info']['buildingId']);
+		$model->gk_floor_id		= addslashes($_POST['info']['floorId']);
 
 		if ($model->save(false)) {
 			$arr['success']	= true;
@@ -215,6 +223,8 @@ class FacilitiesController extends Controller
 		and room_name not like '%cubicle%'
 		and room_name not like '%seat%'
 
+		and room_name not like '%rest%'
+		and room_name not like '%women%'
 		and room_name not like '%men%'
 		and room_name not like '%toilet%'
 
@@ -233,7 +243,12 @@ class FacilitiesController extends Controller
 
 		if ($_GET['building'] != '') {
 			$bldg = addslashes($_GET['building']);
-//			$sql .= " AND bldg_abbre = '$bldg' ";
+			$sql .= " AND bldg_abbre = '$bldg' ";
+		}
+
+		if ($_GET['bldg'] != '') {
+			$bldg = addslashes($_GET['bldg']);
+			$sql .= " AND bldg_abbre = '$bldg' ";
 		}
 
 		if ($_GET['webapp']=='display') {
@@ -248,12 +263,10 @@ class FacilitiesController extends Controller
 
 		$sql .= " order by bldg_abbre asc, room_name asc, floor asc, new_room_no asc, department asc ";
 
-		$sql .= " limit 50 ";
-
 		//$_GET['limit'] = '10';
 		if ($_GET['limit'] > '0') {
 			$limit = addslashes($_GET['limit']);
-//			$sql .= " limit $limit ";
+			$sql .= " limit $limit ";
 		}
 
 		//echo $sql;
@@ -315,13 +328,22 @@ class FacilitiesController extends Controller
 				$out['features'][$i]['type'] = 'Feature';
 
 				//$out['features'][$i]['properties']['buildingId']		= trim($value['bldg_code']);
+				//$out['features'][$i]['properties']['buildingId']		= trim($value['gk_bldg_id'])=='' ? '0023' : trim($value['gk_bldg_id']);
 				$out['features'][$i]['properties']['buildingId']		= '0001';
 				//$out['features'][$i]['properties']['floorId']			= trim($value['floor']);
 				$out['features'][$i]['properties']['floorId']			= '0001';
+
+				if (trim($value['bldg_abbre']) == 'SG') {
+					$out['features'][$i]['properties']['buildingId']	= '0023';
+					$out['features'][$i]['properties']['floorId']		= null;
+					//unset($out['features'][$i]['properties']['buildingId']);
+					unset($out['features'][$i]['properties']['floorId']);
+				}
+
 				$out['features'][$i]['properties']['label']				= trim($value['room_name']);
 
 				///$out['features'][$i]['properties']['mapLabelId']		= trim($value['id']);
-				$out['features'][$i]['properties']['mapLabelId']		= $i;
+				///$out['features'][$i]['properties']['mapLabelId']		= $i;
 
 				$out['features'][$i]['properties']['category']			= trim($value['gk_category'])=='' ? 'Label' : trim($value['gk_category']);
 				$out['features'][$i]['properties']['fontSize']			= trim($value['gk_fontsize'])<'2' ? intval(24) : intval(trim($value['gk_fontsize']));
@@ -335,10 +357,7 @@ class FacilitiesController extends Controller
 
 				$out['features'][$i]['properties']['type']				= trim($value['gk_type'])=='' ? 'IconWithText' : trim($value['gk_type']);
 
-				//$out['features'][$i]['properties']['partialPath']		= trim($value['gk_partialpath'])=='' ? 'Information' : trim($value['gk_partialpath']);
-				//$out['features'][$i]['properties']['partialPath']		= 'http://localhost/~iancampbell/nelson_demo/css/icons/ic_admin_info_v2.png';
 				$out['features'][$i]['properties']['partialPath']		= 'css/icons/ic_admin_info_v2.png';
-				//$out['features'][$i]['properties']['base64']			= 'iconDefault';
 
 				if (trim($value['room_name']) == 'Sculpture') {
 					//$out['features'][$i]['properties']['partialPath'] = 'css/icons/ic_admin_camera.png';
@@ -358,21 +377,19 @@ class FacilitiesController extends Controller
 				$out['features'][$i]['geometry']['type']				= 'Point';
 
 				if (trim($value['latitude']) != '') {
-					$value['latitude'] = floatval(substr(trim($value['latitude']),0,6) . rand(1000, 9999));
+					$value['latitude'] = floatval(substr(trim($value['latitude']),0,9) . rand(10000, 99999));
 				} else {
 					$value['latitude'] = floatval('-73.96' . rand(1000, 9999));
 				}
 
 				if (trim($value['longitude']) != '') {
-					$value['longitude'] = floatval(substr(trim($value['longitude']),0,6) . rand(1000, 9999));
+					$value['longitude'] = floatval(substr(trim($value['longitude']),0,9) . rand(10000, 99999));
 				} else {
 					$value['longitude'] = floatval('40.69' . rand(1000, 9999));
 				}
 
-
 				$out['features'][$i]['geometry']['coordinates'][]		= trim($value['longitude'])=='' ? '-73.964854' : trim($value['longitude']);
 				$out['features'][$i]['geometry']['coordinates'][]		= trim($value['latitude'])=='' ? '40.690357' : trim($value['latitude']);
-
 
 				if (trim($value['new_room_no']) == '') {
 					$value['new_room_no'] = '-';
@@ -389,7 +406,10 @@ class FacilitiesController extends Controller
 				$out['features'][$i]['user_properties']['roomNo']			= trim($value['room_no'])==''?'1':trim($value['room_no']);
 				$out['features'][$i]['user_properties']['newRoomNo']		= trim($value['new_room_no']);
 				$out['features'][$i]['user_properties']['gkDisplay']		= trim($value['gk_display']);
-				$out['features'][$i]['user_properties']['gkDepartment']		= trim($value['gk_department']);
+
+				if (trim($value['gk_department']) != '') {
+					$out['features'][$i]['user_properties']['gkDepartment']		= trim($value['gk_department']);
+				}
 
 				if (trim($value['gk_sculpture_name']) != '') {
 					$out['features'][$i]['user_properties']['gkArtist']			= trim($value['gk_sculpture_artist']);
@@ -403,6 +423,12 @@ class FacilitiesController extends Controller
 				//$out['features'][$i]['user_properties']['posts']			= $posts;
 
 				$i++;
+
+				//break;
+
+				if ($i > 10) {
+				//	break;
+				}
 
 			}
 		} else {
