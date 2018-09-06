@@ -54,7 +54,7 @@ class Facilities extends \yii\db\ActiveRecord
         return [
             //[['bldg_code', 'owned_leased', 'bldg_name', 'bldg_abbre', 'floor', 'room_no', 'new_room_no', 'line', 'status', 'station_count', 'sf', 'sf_fte', 'space_type', 'room_name', 'donor_space', 'av', 'ceiling_hgt', 'department', 'space', 'time', 'proration', 'calcuated_sf', 'function_code', 'major_category', 'functional_category', 'functional_title', 'on_off_campus'], 'required'],
 
-            [['bldg_code', 'owned_leased', 'bldg_name', 'bldg_abbre', 'floor', 'room_no', 'new_room_no', 'line', 'status', 'station_count', 'sf', 'sf_fte', 'space_type', 'room_name', 'donor_space', 'av', 'ceiling_hgt', 'department', 'space', 'time', 'proration', 'calcuated_sf', 'function_code', 'major_category', 'functional_category', 'functional_title', 'on_off_campus', 'latitude', 'longitude', 'accessible', 'gk_display'], 'string', 'max' => 50],
+            [['bldg_code', 'owned_leased', 'bldg_name', 'bldg_abbre', 'floor', 'room_no', 'new_room_no', 'line', 'status', 'station_count', 'sf', 'sf_fte', 'space_type', 'room_name', 'donor_space', 'av', 'ceiling_hgt', 'department', 'space', 'time', 'proration', 'calcuated_sf', 'function_code', 'major_category', 'functional_category', 'functional_title', 'on_off_campus', 'latitude', 'longitude', 'accessible', 'gk_display', 'gk_bldg_id', 'gk_floor_id'], 'string', 'max' => 50],
         ];
     }
 
@@ -96,6 +96,8 @@ class Facilities extends \yii\db\ActiveRecord
             'longitude' => 'Longitude',
             'accessible' => 'Accessible',
             'gk_display' => 'GK Display',
+            'gk_bldg_id' => 'Building ID',
+            'gk_floor_id' => 'Floor ID',
 
         ];
     }

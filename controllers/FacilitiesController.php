@@ -131,8 +131,8 @@ class FacilitiesController extends Controller
 		$arr['post'] = json_encode($_POST);
 
 		$this->doLogEntry();
-		$this->checkToken();
-		$remote = $this->checkRemote($_SERVER['REMOTE_ADDR']);
+//		$this->checkToken();
+//		$remote = $this->checkRemote($_SERVER['REMOTE_ADDR']);
 
 		/* TODO remove this when going live */
     	header("Access-Control-Allow-Origin: *");
@@ -179,6 +179,47 @@ class FacilitiesController extends Controller
 		die();
 	}
 
+	public function actionBldg() {
+
+		//echo 'actionFetchBldg';
+		//die();
+
+		$out['post'] = json_encode($_POST);
+
+	    header("Access-Control-Allow-Origin: *");
+
+	    $dept = $_POST['dept'];
+
+		$sql = " select bldg_abbre from facilities where gk_department like '%$dept%' ";
+
+
+		$connection = Yii::$app->getDb();
+		$command = $connection->createCommand($sql);
+
+		$result = $command->queryAll();
+
+		$rowCount = count($result);
+
+		if ($result[0]) {
+
+			foreach($result as $key=>$value) {
+				$out['res'][] = $value['bldf_abbre'];
+				$out['bldg'] = $value['bldf_abbre'];;
+			}
+
+		}
+
+
+		$out['sql'] = $sql;
+
+		header('Content-Type: application/json');
+		//echo json_encode($out, JSON_PRETTY_PRINT);
+		echo json_encode($out);
+		die();
+
+
+	}
+
     public function actionGet() {
 
 		$this->doLogEntry();
@@ -199,9 +240,12 @@ class FacilitiesController extends Controller
 
 		and department not in ('CIRCULATION','INACTIVE','UNUSABLE')
 
+		and gk_bldg_id != ''
+		and gk_floor_id != ''
 		and room_name != ''
 		and gk_display != 'N'
 		and floor not like '%bsm%'
+
 		and room_name not like '%ele%'
 		and room_name not like '%class%'
 		and room_name not like '%storage%'
@@ -329,15 +373,21 @@ class FacilitiesController extends Controller
 
 				//$out['features'][$i]['properties']['buildingId']		= trim($value['bldg_code']);
 				//$out['features'][$i]['properties']['buildingId']		= trim($value['gk_bldg_id'])=='' ? '0023' : trim($value['gk_bldg_id']);
-				$out['features'][$i]['properties']['buildingId']		= '0001';
-				//$out['features'][$i]['properties']['floorId']			= trim($value['floor']);
-				$out['features'][$i]['properties']['floorId']			= '0001';
+
+				//$out['features'][$i]['properties']['floorId']			= trim($value['gk_floor_id'])=='' ? '0001' : trim($value['gk_floor_id']);
+				//$out['features'][$i]['properties']['LEVEL_ID']			= trim($value['gk_floor_id'])=='' ? '0001' : trim($value['gk_floor_id']);
+
+				$out['features'][$i]['properties']['buildingId']		= trim($value['gk_bldg_id']);
+				$out['features'][$i]['properties']['floorId']			= trim($value['gk_floor_id']);
+				$out['features'][$i]['properties']['LEVEL_ID']			= trim($value['gk_floor_id']);
+				//$out['features'][$i]['properties']['floorId']			= '0001';
 
 				if (trim($value['bldg_abbre']) == 'SG') {
 					$out['features'][$i]['properties']['buildingId']	= '0023';
+					$out['features'][$i]['properties']['LEVEL_ID']		= null;
 					$out['features'][$i]['properties']['floorId']		= null;
 					//unset($out['features'][$i]['properties']['buildingId']);
-					unset($out['features'][$i]['properties']['floorId']);
+					//unset($out['features'][$i]['properties']['floorId']);
 				}
 
 				$out['features'][$i]['properties']['label']				= trim($value['room_name']);
@@ -388,8 +438,8 @@ class FacilitiesController extends Controller
 					$value['longitude'] = floatval('40.69' . rand(1000, 9999));
 				}
 
-				$out['features'][$i]['geometry']['coordinates'][]		= trim($value['longitude'])=='' ? '-73.964854' : trim($value['longitude']);
-				$out['features'][$i]['geometry']['coordinates'][]		= trim($value['latitude'])=='' ? '40.690357' : trim($value['latitude']);
+				$out['features'][$i]['geometry']['coordinates'][0]		= trim($value['longitude'])=='' ? '-73.964854' : trim($value['longitude']);
+				$out['features'][$i]['geometry']['coordinates'][1]		= trim($value['latitude'])=='' ? '40.690357' : trim($value['latitude']);
 
 				if (trim($value['new_room_no']) == '') {
 					$value['new_room_no'] = '-';
@@ -409,6 +459,7 @@ class FacilitiesController extends Controller
 
 				if (trim($value['gk_department']) != '') {
 					$out['features'][$i]['user_properties']['gkDepartment']		= trim($value['gk_department']);
+					//$out['features'][$i]['properties']['label']					= trim($value['gk_department']);
 				}
 
 				if (trim($value['gk_sculpture_name']) != '') {
