@@ -131,8 +131,8 @@ class FacilitiesController extends Controller
 		$arr['post'] = json_encode($_POST);
 
 		$this->doLogEntry();
-//		$this->checkToken();
-//		$remote = $this->checkRemote($_SERVER['REMOTE_ADDR']);
+		$this->checkToken();
+		$remote = $this->checkRemote($_SERVER['REMOTE_ADDR']);
 
 		/* TODO remove this when going live */
     	header("Access-Control-Allow-Origin: *");
@@ -179,51 +179,10 @@ class FacilitiesController extends Controller
 		die();
 	}
 
-	public function actionBldg() {
-
-		//echo 'actionFetchBldg';
-		//die();
-
-		$out['post'] = json_encode($_POST);
-
-	    header("Access-Control-Allow-Origin: *");
-
-	    $dept = $_POST['dept'];
-
-		$sql = " select bldg_abbre from facilities where gk_department like '%$dept%' ";
-
-
-		$connection = Yii::$app->getDb();
-		$command = $connection->createCommand($sql);
-
-		$result = $command->queryAll();
-
-		$rowCount = count($result);
-
-		if ($result[0]) {
-
-			foreach($result as $key=>$value) {
-				$out['res'][] = $value['bldf_abbre'];
-				$out['bldg'] = $value['bldf_abbre'];;
-			}
-
-		}
-
-
-		$out['sql'] = $sql;
-
-		header('Content-Type: application/json');
-		//echo json_encode($out, JSON_PRETTY_PRINT);
-		echo json_encode($out);
-		die();
-
-
-	}
-
     public function actionGet() {
 
 		$this->doLogEntry();
-		//$this->checkToken();
+		$this->checkToken();
 
 		$posts = json_encode($_REQUEST, true);
 
@@ -310,7 +269,7 @@ class FacilitiesController extends Controller
 		//$_GET['limit'] = '10';
 		if ($_GET['limit'] > '0') {
 			$limit = addslashes($_GET['limit']);
-			$sql .= " limit $limit ";
+//			$sql .= " limit $limit ";
 		}
 
 		//echo $sql;
@@ -334,9 +293,7 @@ class FacilitiesController extends Controller
 				foreach($value as $key2=>$value2) {
 					$value2 = trim($value2);
 					$value[$key2] = str_replace("'", '', $value2);
-					//$value2 = str_replace('"', '', $value2);
 					$value2 = mb_convert_encoding($value2, 'UTF-8', 'UTF-8');
-					//$value[$key2] = addslashes($value2);
 					$value[$key2] = str_replace("\\\\", "\\", $value[$key2]);
 				}
 
@@ -347,35 +304,8 @@ class FacilitiesController extends Controller
 				}
 
 				$value['room_name'] = ucwords(strtolower($value['room_name']));
-				//$value['room_name'] = 'hello';
-
-				// 	if (trim($value['gk_department']) == '' && $value['gk_display'] != 'Y') {
-				// 		$skip = false;
-				// 		$needles[] = 'fac';
-				// 		$needles[] = 'ofc';
-				// 		$needles[] = 'conf';
-				// 		$needles[] = 'wom';
-				// 		foreach($needles as $needle) {
-				// 			$pos = stripos('_'.$value['room_name'], $needle);
-				// 			if ($pos > 0) {
-				// 				$skip = true;
-				// 			}
-				// 		}
-				// 		if ($skip) {
-				// 			continue;
-				// 		}
-				// 	}
-
-				$value['bldg_code'] = str_pad($value['bldg_code'], 4, '0', STR_PAD_LEFT);
-				$value['floor'] = str_pad($value['floor'], 4, '0', STR_PAD_LEFT);
 
 				$out['features'][$i]['type'] = 'Feature';
-
-				//$out['features'][$i]['properties']['buildingId']		= trim($value['bldg_code']);
-				//$out['features'][$i]['properties']['buildingId']		= trim($value['gk_bldg_id'])=='' ? '0023' : trim($value['gk_bldg_id']);
-
-				//$out['features'][$i]['properties']['floorId']			= trim($value['gk_floor_id'])=='' ? '0001' : trim($value['gk_floor_id']);
-				//$out['features'][$i]['properties']['LEVEL_ID']			= trim($value['gk_floor_id'])=='' ? '0001' : trim($value['gk_floor_id']);
 
 				$out['features'][$i]['properties']['buildingId']		= trim($value['gk_bldg_id']);
 				$out['features'][$i]['properties']['floorId']			= trim($value['gk_floor_id']);
@@ -392,20 +322,18 @@ class FacilitiesController extends Controller
 
 				$out['features'][$i]['properties']['label']				= trim($value['room_name']);
 
-				///$out['features'][$i]['properties']['mapLabelId']		= trim($value['id']);
-				///$out['features'][$i]['properties']['mapLabelId']		= $i;
-
 				$out['features'][$i]['properties']['category']			= trim($value['gk_category'])=='' ? 'Label' : trim($value['gk_category']);
 				$out['features'][$i]['properties']['fontSize']			= trim($value['gk_fontsize'])<'2' ? intval(24) : intval(trim($value['gk_fontsize']));
-				$out['features'][$i]['properties']['showOnCreation']	= trim($value['gk_showoncreation'])=='' ? true : trim($value['gk_showoncreation']);
+				//$out['features'][$i]['properties']['showOnCreation']	= trim($value['gk_showoncreation'])=='' ? true : trim($value['gk_showoncreation']);
+				$out['features'][$i]['properties']['showOnCreation']	= false;
 				$out['features'][$i]['properties']['showToolTip']		= trim($value['gk_showtooltip'])=='' ? true : trim($value['gk_showtooltip']);
 				$out['features'][$i]['properties']['tooltipTitle']		= trim($value['gk_tooltiptitle'])=='' ? 'tt title' : trim($value['gk_tooltiptitle']);
 				$out['features'][$i]['properties']['tooltipBody']		= trim($value['gk_tooltipbody'])=='' ? 'tt body' : trim($value['gk_tooltipbody']);
 
-				//$out['features'][$i]['properties']['location']			= 'URL';
 				$out['features'][$i]['properties']['location']			= '';
 
-				$out['features'][$i]['properties']['type']				= trim($value['gk_type'])=='' ? 'IconWithText' : trim($value['gk_type']);
+				//$out['features'][$i]['properties']['type']				= trim($value['gk_type'])=='' ? 'IconWithText' : trim($value['gk_type']);
+				$out['features'][$i]['properties']['type']				= 'IconWithText';
 
 				$out['features'][$i]['properties']['partialPath']		= 'css/icons/ic_admin_info_v2.png';
 
@@ -414,11 +342,6 @@ class FacilitiesController extends Controller
 					$out['features'][$i]['properties']['partialPath'] = 'css/icons/ic_artwork.png';
 				}
 
-				// 	if (trim($value['space_type']) == '7701' || trim($value['space_type']) == '7800'|| trim($value['space_type']) == '1650') {
-				// 		$value['room_name'] = 'Restroom';
-				// 	}
-
-				//if (trim($value['space_type']) == '7701' || trim($value['space_type']) == '7800'|| trim($value['space_type']) == '1650') {
 				if (trim($value['space_type']) == '7701') {
 					//$value['room_name'] = 'Restroom';
 					$out['features'][$i]['properties']['partialPath'] = 'css/icons/ic_admin_restroom_all.png';
@@ -468,15 +391,11 @@ class FacilitiesController extends Controller
 					$out['features'][$i]['user_properties']['gkArtDate']		= trim($value['gk_sculpture_date']);
 				}
 
-				$out['features'][$i]['user_properties']['count']			= $i . ' ' . $rowCount;
+				//$out['features'][$i]['user_properties']['count']			= $i . ' ' . $rowCount;
 				$out['features'][$i]['user_properties']['itemId']			= $i;
 				//$out['features'][$i]['user_properties']['sql']			= $sql;
-				//$out['features'][$i]['user_properties']['posts']			= $posts;
 
 				$i++;
-
-				//break;
-
 				if ($i > 10) {
 				//	break;
 				}
@@ -488,16 +407,9 @@ class FacilitiesController extends Controller
 			$out['sql'] = $sql;
 		}
 
-		// 	echo '<pre>';
-		// 	print_r($out);
-		// 	echo '</pre>';
-		// 	die();
-
 		header('Content-Type: application/json');
-		//echo json_encode($out, JSON_PRETTY_PRINT);
 		echo json_encode($out);
 		die();
-
     }
 
     public function actionToggle() {
