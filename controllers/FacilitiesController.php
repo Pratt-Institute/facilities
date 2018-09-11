@@ -401,6 +401,22 @@ class FacilitiesController extends Controller
 				}
 
 			}
+
+			$out['features'][$i]['type'] = 'Feature';
+
+			$out['features'][$i]['properties']['POINT_ID']		= $i;
+			$out['features'][$i]['properties']['CATEGORY']		= $i;
+			$out['features'][$i]['properties']['floorId']		= '0001';
+			$out['features'][$i]['properties']['buildingId']	= '0001';
+			$out['features'][$i]['properties']['label']			= $i;
+			$out['features'][$i]['properties']['type']			= 'Icon';
+
+			$out['features'][$i]['geometry']['type']				= 'Point';
+			$out['features'][$i]['geometry']['coordinates'][0]		= '-73.964854';
+			$out['features'][$i]['geometry']['coordinates'][1]		= '40.690357';
+
+			$out['features'][$i]['user_properties']['itemId']	= $i;
+
 		} else {
 			$out['success'] = false;
 			$out['message'] = 'no matches';
