@@ -193,15 +193,15 @@ class FacilitiesController extends Controller
 		select * from facilities
 
 		/*where ( gk_display = 'Y' or gk_department != '' or space_type in (1650,7701,7800) )*/
-		where ( gk_display = 'Y' or gk_department != '' )
+		where ( gk_display = 'Y' or gk_department != '' or bldg_abbre = 'sg' )
 
 		and space_type not in (7500,7700,7600)
 
 		and department not in ('CIRCULATION','INACTIVE','UNUSABLE')
 
-		and gk_bldg_id != ''
+		/*and gk_bldg_id != ''
 		and gk_floor_id != ''
-		and room_name != ''
+		and room_name != ''*/
 		and gk_display != 'N'
 		and floor not like '%bsm%'
 
@@ -243,6 +243,11 @@ class FacilitiesController extends Controller
 		*/
 
 		";
+
+		if ($_GET['recordId'] != '') {
+			$recordId = addslashes($_GET['recordId']);
+			$sql .= " AND id = '$recordId' ";
+		}
 
 		if ($_GET['building'] != '') {
 			$bldg = addslashes($_GET['building']);
@@ -313,9 +318,9 @@ class FacilitiesController extends Controller
 				//$out['features'][$i]['properties']['floorId']			= '0001';
 
 				if (trim($value['bldg_abbre']) == 'SG') {
-					$out['features'][$i]['properties']['buildingId']	= '0023';
-					$out['features'][$i]['properties']['LEVEL_ID']		= null;
-					$out['features'][$i]['properties']['floorId']		= null;
+					$out['features'][$i]['properties']['buildingId']	= '0025';
+					$out['features'][$i]['properties']['LEVEL_ID']		= '0100';
+					$out['features'][$i]['properties']['floorId']		= '0100';
 					//unset($out['features'][$i]['properties']['buildingId']);
 					//unset($out['features'][$i]['properties']['floorId']);
 				}
