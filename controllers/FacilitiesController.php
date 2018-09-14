@@ -189,92 +189,92 @@ class FacilitiesController extends Controller
 		/* TODO remove this when going live */
     	header("Access-Control-Allow-Origin: *");
 
-		$sql = "
-		select * from facilities
-
-		/*where ( gk_display = 'Y' or gk_department != '' or space_type in (1650,7701,7800) )*/
-		where ( gk_display = 'Y' or gk_department != '' or bldg_abbre = 'sg' )
-
-		and space_type not in (7500,7700,7600)
-
-		and department not in ('CIRCULATION','INACTIVE','UNUSABLE')
-
-		/*and gk_bldg_id != ''
-		and gk_floor_id != ''
-		and room_name != ''*/
-		and gk_display != 'N'
-		and floor not like '%bsm%'
-
-		and room_name not like '%ele%'
-		and room_name not like '%class%'
-		and room_name not like '%storage%'
-		and room_name not like '%corr%'
-		and room_name not like '%cl.%'
-		and room_name not like '% cl%'
-		and room_name not like '%mech%'
-		and room_name not like '%inactive%'
-		and room_name not like '%tele%'
-		and room_name not like '%equip%'
-		and room_name not like '%closet%'
-		and room_name not like '%elec%'
-		and room_name not like '%lobby%'
-		and room_name not like '%shower%'
-		and room_name not like '%switch%'
-		and room_name not like '%janit%'
-		and room_name not like '%server%'
-		and room_name not like '%booth%'
-		and room_name not like '%cubicle%'
-		and room_name not like '%seat%'
-
-		and room_name not like '%rest%'
-		and room_name not like '%women%'
-		and room_name not like '%men%'
-		and room_name not like '%toilet%'
-
-		and room_name not like '%inactive%'
-		and department not like '%inactive%'
-		and major_category not like '%inactive%'
-		and functional_category not like '%inactive%'
-
-		/*
-		and room_name not like '%fac%'
-		and room_name not like '%tech%'
-		and room_name != 'office'
-		*/
-
-		";
+		$sql = " select * from facilities ";
 
 		if ($_GET['recordId'] != '') {
+
 			$recordId = addslashes($_GET['recordId']);
-			$sql .= " AND id = '$recordId' ";
-		}
+			$sql .= " where id = '$recordId' ";
 
-		if ($_GET['building'] != '') {
-			$bldg = addslashes($_GET['building']);
-			$sql .= " AND bldg_abbre = '$bldg' ";
-		}
+		} else {
 
-		if ($_GET['bldg'] != '') {
-			$bldg = addslashes($_GET['bldg']);
-			$sql .= " AND bldg_abbre = '$bldg' ";
-		}
+			$sql .= " where ( gk_display = 'Y' or gk_department != '' or bldg_abbre = 'sg' )
+				and space_type not in (7500,7700,7600)
+				and department not in ('INACTIVE','UNUSABLE')
+				and room_name not like '%inactive%'
+				and department not like '%inactive%'
+				and major_category not like '%inactive%'
+				and functional_category not like '%inactive%' ";
 
-		if ($_GET['webapp']=='display') {
-			$sql .= " AND gk_display != 'N' ";
-		}
+			if ($_GET['floor'] != '') {
 
-		if ($_GET['webapp']!='manage') {
-			$sql .= " AND gk_display != 'N' ";
-		}
+				$sql .= " and gk_floor_id = '".addslashes($_GET['floor'])."' ";
 
-		$sql .= " group by bldg_abbre, floor, gk_department, department, room_name, gk_sculpture_name ";
+			} else {
 
-		$sql .= " order by bldg_abbre asc, room_name asc, floor asc, new_room_no asc, department asc ";
+				$sql .= "
+					and gk_bldg_id != ''
+					and gk_floor_id != ''
+					and room_name != ''
+					and gk_display != 'N'
+					and floor not like '%bsm%'
+					and room_name not like '%ele%'
+					and room_name not like '%class%'
+					and room_name not like '%storage%'
+					and room_name not like '%corr%'
+					and room_name not like '%cl.%'
+					and room_name not like '% cl%'
+					and room_name not like '%mech%'
+					and room_name not like '%inactive%'
+					and room_name not like '%tele%'
+					and room_name not like '%equip%'
+					and room_name not like '%closet%'
+					and room_name not like '%elec%'
+					and room_name not like '%lobby%'
+					and room_name not like '%shower%'
+					and room_name not like '%switch%'
+					and room_name not like '%janit%'
+					and room_name not like '%server%'
+					and room_name not like '%booth%'
+					and room_name not like '%cubicle%'
+					and room_name not like '%seat%'
+					and room_name not like '%rest%'
+					and room_name not like '%women%'
+					and room_name not like '%men%'
+					and room_name not like '%toilet%'
+					and room_name not like '%fac%'
+					and room_name not like '%tech%'
+					and room_name != 'office' ";
 
-		//$_GET['limit'] = '10';
-		if ($_GET['limit'] > '0') {
-			$limit = addslashes($_GET['limit']);
-//			$sql .= " limit $limit ";
+			}
+
+			if ($_GET['building'] != '') {
+				$bldg = addslashes($_GET['building']);
+				$sql .= " AND bldg_abbre = '$bldg' ";
+			}
+
+			if ($_GET['bldg'] != '') {
+				$bldg = addslashes($_GET['bldg']);
+				$sql .= " AND bldg_abbre = '$bldg' ";
+			}
+
+			if ($_GET['webapp']=='display') {
+				$sql .= " AND gk_display != 'N' ";
+			}
+
+			if ($_GET['webapp']!='manage') {
+				$sql .= " AND gk_display != 'N' ";
+			}
+
+			$sql .= " group by bldg_abbre, floor, gk_department, department, room_name, gk_sculpture_name ";
+
+			$sql .= " order by bldg_abbre asc, room_name asc, floor asc, new_room_no asc, department asc ";
+
+			if ($_GET['limit'] > '0') {
+				$limit = addslashes($_GET['limit']);
+				$sql .= " limit $limit ";
+			}
+
 		}
 
 		//echo $sql;
@@ -318,9 +318,9 @@ class FacilitiesController extends Controller
 				//$out['features'][$i]['properties']['floorId']			= '0001';
 
 				if (trim($value['bldg_abbre']) == 'SG') {
-					$out['features'][$i]['properties']['buildingId']	= '0025';
-					$out['features'][$i]['properties']['LEVEL_ID']		= '0100';
-					$out['features'][$i]['properties']['floorId']		= '0100';
+					$out['features'][$i]['properties']['buildingId']	= '0001';
+					$out['features'][$i]['properties']['LEVEL_ID']		= '0001';
+					$out['features'][$i]['properties']['floorId']		= '0001';
 					//unset($out['features'][$i]['properties']['buildingId']);
 					//unset($out['features'][$i]['properties']['floorId']);
 				}
@@ -425,13 +425,29 @@ class FacilitiesController extends Controller
 		} else {
 			$out['success'] = false;
 			$out['message'] = 'no matches';
-			$out['sql'] = $sql;
+			$out['sql'] = $this->trim_all($sql);
 		}
 
 		header('Content-Type: application/json');
 		echo json_encode($out);
 		die();
     }
+
+    private function trim_all( $str , $what = NULL , $with = ' ' ) {
+		if( $what === NULL ) {
+			//  Character      Decimal      Use
+			//  "\0"            0           Null Character
+			//  "\t"            9           Tab
+			//  "\n"           10           New line
+			//  "\x0B"         11           Vertical Tab
+			//  "\r"           13           New Line in Mac
+			//  " "            32           Space
+
+			$what   = "\\x00-\\x20";    //all white-spaces and control chars
+		}
+
+		return trim( preg_replace( "/[".$what."]+/" , $with , $str ) , $what );
+	}
 
     public function actionToggle() {
 
