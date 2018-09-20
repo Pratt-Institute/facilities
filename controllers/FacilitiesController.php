@@ -122,6 +122,133 @@ class FacilitiesController extends Controller
 		}
 	}
 
+
+	public function actionLoad() {
+
+		echo 'loads done';
+		die();
+		return true;
+
+		$path = '/Users/iancampbell/Sites/points_sample.json';
+
+		$myfile = fopen($path, "r") or die("Unable to open file!");
+		$contents = fread($myfile,filesize($path));
+
+		$obj = json_decode($contents, true);
+
+		foreach ($obj['features'] as $key=>$value) {
+
+			if ($value['properties']['SUITE']) {
+
+				echo "<p>";
+				// 	echo '<br>Building: '.$bldg = $value['properties']['buildingId'];
+				// 	echo '<br>Floor: '.$floor = $value['properties']['floorId'];
+				// 	echo '<br>Room: '.$room = $value['properties']['SUITE'];
+
+				$bldg = $value['properties']['buildingId'];
+				$floor = $value['properties']['floorId'];
+				$room = $value['properties']['SUITE'];
+
+				$label = $value['properties']['label'];
+				$label = mb_convert_encoding($label, 'UTF-8', 'UTF-8');
+				$label = iconv("UTF-8", "UTF-8//IGNORE", $label);
+				$label = preg_replace("/[^\\x00-\\xFFFF]/", "", $label);
+				$label = preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $label);
+
+				$category = $value['properties']['CATEGORY'];
+
+				//$label_exp = explode(',',$label);
+				//$label_exp = explode(' ',$label);
+				$label_exp = explode('.',$label);
+				$label0 = addslashes($label_exp[0]);
+
+				$sql = "
+					select
+						id,
+						bldg_abbre,
+						room_no,
+						new_room_no,
+						room_name,
+						gk_bldg_id,
+						gk_floor_id,
+						latitude,
+						longitude
+
+					from facilities
+					where gk_bldg_id = '$bldg'
+					and gk_floor_id = '$floor'
+					/*and (room_no like '%$room%' or new_room_no like '%$room%' or room_name like '%$label0%')*/
+					/*and (room_no like '%$room%' or new_room_no like '%$room%')*/
+
+					and (room_name like '%$category%')
+
+					";
+
+				$connection = Yii::$app->getDb();
+				$command = $connection->createCommand($sql);
+
+				$result = $command->queryAll();
+
+				$rowCount = count($result);
+
+				if ($result[0]) {
+
+					foreach($result as $key1=>$value1) {
+
+						$id			= $value1['id'];
+						$latitude	= $value['properties']['latitude'];
+						$longitude	= $value['properties']['longitude'];
+
+						if (strlen(strval($value1['latitude'])) < 12) {
+
+							//echo "<pre>";
+							//echo $key1;
+							//print_r($value1);
+							//echo "</pre>";
+
+        					$model = $this->findModel($id);
+
+        					//echo "<pre>";
+        					//print_r($model);
+        					//echo "</pre>";
+
+							$model->latitude		= $latitude;
+							$model->longitude		= $longitude;
+
+							if($model->save(false)){
+								echo '<br>saved '.$id;
+								//die();
+							} else {
+								$arr['success'] = false;
+								$arr['message'] = 'Error. Log entry not saved.';
+								echo json_encode($arr);
+								die();
+							}
+						}
+					}
+
+				} else {
+
+					echo "<p>Not Found: ".$sql;
+					echo "<br>".$bldg.' -- '.$floor;
+					echo "<pre>";
+					echo $key;
+					print_r($value);
+					echo "</pre>";
+					//die();
+
+				}
+			}
+		}
+
+		fclose($myfile);
+
+		die();
+
+		return true;
+	}
+
+
 	public function actionPut() {
 
 		// 	header('Content-Type: application/json');
@@ -198,9 +325,15 @@ class FacilitiesController extends Controller
 
 		} else {
 
-			$sql .= " where ( gk_display = 'Y' or gk_department != '' or bldg_abbre = 'sg' )
-				and space_type not in (7500,7700,7600)
-				and department not in ('INACTIVE','UNUSABLE')
+			// 	$sql .= " where ( gk_display = 'Y' or gk_department != '' or bldg_abbre = 'sg' )
+			// 		and space_type not in (7500,7700,7600)
+			// 		and department not in ('INACTIVE','UNUSABLE')
+			// 		and room_name not like '%inactive%'
+			// 		and department not like '%inactive%'
+			// 		and major_category not like '%inactive%'
+			// 		and functional_category not like '%inactive%' ";
+
+			$sql .= " where department not in ('INACTIVE','UNUSABLE')
 				and room_name not like '%inactive%'
 				and department not like '%inactive%'
 				and major_category not like '%inactive%'
@@ -210,16 +343,15 @@ class FacilitiesController extends Controller
 
 				$sql .= " and gk_floor_id = '".addslashes($_GET['floor'])."' ";
 
-			} else {
+			}
+
+			if ($_GET['select'] == 'floor') {
 
 				$sql .= "
 					and gk_bldg_id != ''
 					and gk_floor_id != ''
 					and room_name != ''
 					and gk_display != 'N'
-					and floor not like '%bsm%'
-					and room_name not like '%ele%'
-					and room_name not like '%class%'
 					and room_name not like '%storage%'
 					and room_name not like '%corr%'
 					and room_name not like '%cl.%'
@@ -231,20 +363,15 @@ class FacilitiesController extends Controller
 					and room_name not like '%closet%'
 					and room_name not like '%elec%'
 					and room_name not like '%lobby%'
-					and room_name not like '%shower%'
 					and room_name not like '%switch%'
 					and room_name not like '%janit%'
 					and room_name not like '%server%'
 					and room_name not like '%booth%'
 					and room_name not like '%cubicle%'
 					and room_name not like '%seat%'
-					and room_name not like '%rest%'
-					and room_name not like '%women%'
-					and room_name not like '%men%'
-					and room_name not like '%toilet%'
 					and room_name not like '%fac%'
 					and room_name not like '%tech%'
-					and room_name != 'office' ";
+					";
 
 			}
 
@@ -255,7 +382,7 @@ class FacilitiesController extends Controller
 
 			if ($_GET['bldg'] != '') {
 				$bldg = addslashes($_GET['bldg']);
-				$sql .= " AND bldg_abbre = '$bldg' ";
+				$sql .= " AND gk_bldg_id = '$bldg' ";
 			}
 
 			if ($_GET['webapp']=='display') {
@@ -266,8 +393,8 @@ class FacilitiesController extends Controller
 				$sql .= " AND gk_display != 'N' ";
 			}
 
-			$sql .= " group by bldg_abbre, floor, gk_department, department, room_name, gk_sculpture_name ";
-
+			//$sql .= " group by bldg_abbre, floor, gk_department, department, room_name, gk_sculpture_name ";
+			$sql .= " group by bldg_abbre, floor, room_name ";
 			$sql .= " order by bldg_abbre asc, room_name asc, floor asc, new_room_no asc, department asc ";
 
 			if ($_GET['limit'] > '0') {
@@ -327,7 +454,9 @@ class FacilitiesController extends Controller
 
 				$out['features'][$i]['properties']['label']				= trim($value['room_name']);
 
-				$out['features'][$i]['properties']['category']			= trim($value['gk_category'])=='' ? 'Label' : trim($value['gk_category']);
+//				$out['features'][$i]['properties']['category']			= trim($value['gk_category'])=='' ? 'Label' : trim($value['gk_category']);
+				$out['features'][$i]['properties']['category']			= 'Information';
+
 				$out['features'][$i]['properties']['fontSize']			= trim($value['gk_fontsize'])<'2' ? intval(24) : intval(trim($value['gk_fontsize']));
 				//$out['features'][$i]['properties']['showOnCreation']	= trim($value['gk_showoncreation'])=='' ? true : trim($value['gk_showoncreation']);
 				$out['features'][$i]['properties']['showOnCreation']	= false;
@@ -335,10 +464,13 @@ class FacilitiesController extends Controller
 				$out['features'][$i]['properties']['tooltipTitle']		= trim($value['gk_tooltiptitle'])=='' ? 'tt title' : trim($value['gk_tooltiptitle']);
 				$out['features'][$i]['properties']['tooltipBody']		= trim($value['gk_tooltipbody'])=='' ? 'tt body' : trim($value['gk_tooltipbody']);
 
-				$out['features'][$i]['properties']['location']			= '';
+				$out['features'][$i]['properties']['location']			= 'URL';
 
-				//$out['features'][$i]['properties']['type']				= trim($value['gk_type'])=='' ? 'IconWithText' : trim($value['gk_type']);
+				//$out['features'][$i]['properties']['type']			= trim($value['gk_type'])=='' ? 'IconWithText' : trim($value['gk_type']);
 				$out['features'][$i]['properties']['type']				= 'IconWithText';
+				//$out['features'][$i]['properties']['type']			= 'Icon';
+
+				//$host = addslashes($_GET['host']).'/';
 
 				$out['features'][$i]['properties']['partialPath']		= 'css/icons/ic_admin_info_v2.png';
 
@@ -398,7 +530,9 @@ class FacilitiesController extends Controller
 
 				//$out['features'][$i]['user_properties']['count']			= $i . ' ' . $rowCount;
 				$out['features'][$i]['user_properties']['itemId']			= $i;
-				//$out['features'][$i]['user_properties']['sql']			= $sql;
+				$out['features'][$i]['user_properties']['sql']			= $sql;
+
+				//$out['features'][$i]['user_properties']['params']	= $posts;
 
 				$i++;
 				if ($i > 10) {
@@ -472,7 +606,7 @@ class FacilitiesController extends Controller
 
     public function actionLookup() {
 
-    	//die();
+    	die();
 
     	if (@$_GET['field']=='') {
     		$out[] = 'no match';
