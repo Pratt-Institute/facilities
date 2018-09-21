@@ -432,10 +432,16 @@ class FacilitiesController extends Controller
 				$value['floor'] = preg_replace('/[^0-9,.]/', '', trim($value['floor']));
 
 				if (trim($value['floor']) == '') {
-					$value['floor'] = '1';
+					$value['floor'] = '1st';
 				}
 
-				$value['room_name'] = ucwords(strtolower($value['room_name']));
+				if (trim($value['bldg_name']) == 'HIGGINS') {
+					$value['bldg_name'] = 'Higgins Hall';
+				}
+
+				$value['bldg_name']	= ucwords(strtolower(trim($value['bldg_name'])));
+				$value['room_name']	= ucwords(strtolower(trim($value['room_name'])));
+				$value['floor']		= strtolower(trim($value['floor']));
 
 				$out['features'][$i]['type'] = 'Feature';
 
@@ -513,6 +519,7 @@ class FacilitiesController extends Controller
 				$out['features'][$i]['user_properties']['accessible']		= trim($value['accessible']);
 				$out['features'][$i]['user_properties']['bldgName']			= trim($value['bldg_name']);
 				$out['features'][$i]['user_properties']['bldgAbbr']			= trim($value['bldg_abbre']);
+				$out['features'][$i]['user_properties']['floorNo']			= trim($value['floor']);
 				$out['features'][$i]['user_properties']['roomNo']			= trim($value['room_no'])==''?'1':trim($value['room_no']);
 				$out['features'][$i]['user_properties']['newRoomNo']		= trim($value['new_room_no']);
 				$out['features'][$i]['user_properties']['gkDisplay']		= trim($value['gk_display']);
@@ -541,20 +548,20 @@ class FacilitiesController extends Controller
 
 			}
 
-			$out['features'][$i]['type'] = 'Feature';
-
-			$out['features'][$i]['properties']['POINT_ID']		= $i;
-			$out['features'][$i]['properties']['CATEGORY']		= $i;
-			$out['features'][$i]['properties']['floorId']		= '0001';
-			$out['features'][$i]['properties']['buildingId']	= '0001';
-			$out['features'][$i]['properties']['label']			= $i;
-			$out['features'][$i]['properties']['type']			= 'Icon';
-
-			$out['features'][$i]['geometry']['type']				= 'Point';
-			$out['features'][$i]['geometry']['coordinates'][0]		= '-73.964854';
-			$out['features'][$i]['geometry']['coordinates'][1]		= '40.690357';
-
-			$out['features'][$i]['user_properties']['itemId']	= $i;
+			// 	$out['features'][$i]['type'] = 'Feature';
+			//
+			// 	$out['features'][$i]['properties']['POINT_ID']		= $i;
+			// 	$out['features'][$i]['properties']['CATEGORY']		= $i;
+			// 	$out['features'][$i]['properties']['floorId']		= '0001';
+			// 	$out['features'][$i]['properties']['buildingId']	= '0001';
+			// 	$out['features'][$i]['properties']['label']			= $i;
+			// 	$out['features'][$i]['properties']['type']			= 'Icon';
+			//
+			// 	$out['features'][$i]['geometry']['type']				= 'Point';
+			// 	$out['features'][$i]['geometry']['coordinates'][0]		= '-73.964854';
+			// 	$out['features'][$i]['geometry']['coordinates'][1]		= '40.690357';
+			//
+			// 	$out['features'][$i]['user_properties']['itemId']	= $i;
 
 		} else {
 			$out['success'] = false;
