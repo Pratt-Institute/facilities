@@ -429,7 +429,7 @@ class FacilitiesController extends Controller
 					$value[$key2] = str_replace("\\\\", "\\", $value[$key2]);
 				}
 
-				$value['floor'] = preg_replace('/[^0-9,.]/', '', trim($value['floor']));
+				//$value['floor'] = preg_replace('/[^0-9,.]/', '', trim($value['floor']));
 
 				if (trim($value['floor']) == '') {
 					$value['floor'] = '1st';
@@ -537,7 +537,7 @@ class FacilitiesController extends Controller
 
 				//$out['features'][$i]['user_properties']['count']			= $i . ' ' . $rowCount;
 				$out['features'][$i]['user_properties']['itemId']			= $i;
-				$out['features'][$i]['user_properties']['sql']			= $sql;
+				//$out['features'][$i]['user_properties']['sql']			= $sql;
 
 				//$out['features'][$i]['user_properties']['params']	= $posts;
 
