@@ -114,6 +114,7 @@ class FacilitiesController extends Controller
 
 		if (strpos($remote, ALLOWED_IPS) === false) {
 			$arr['success'] = false;
+			$arr['remote'] = $remote;
 			$arr['message'] = 'Error. Remote address not recognized.';
 			echo json_encode($arr);
 			die();
@@ -337,7 +338,12 @@ class FacilitiesController extends Controller
 				and room_name not like '%inactive%'
 				and department not like '%inactive%'
 				and major_category not like '%inactive%'
-				and functional_category not like '%inactive%' ";
+				and functional_category not like '%inactive%'
+				and gk_display != 'N'
+				and gk_bldg_id != ''
+				and gk_floor_id != ''
+				and room_name != ''
+				";
 
 			if ($_GET['floor'] != '') {
 
@@ -347,31 +353,7 @@ class FacilitiesController extends Controller
 
 			if ($_GET['select'] == 'floor') {
 
-				$sql .= "
-					and gk_bldg_id != ''
-					and gk_floor_id != ''
-					and room_name != ''
-					and gk_display != 'N'
-					and room_name not like '%storage%'
-					and room_name not like '%corr%'
-					and room_name not like '%cl.%'
-					and room_name not like '% cl%'
-					and room_name not like '%mech%'
-					and room_name not like '%inactive%'
-					and room_name not like '%tele%'
-					and room_name not like '%equip%'
-					and room_name not like '%closet%'
-					and room_name not like '%elec%'
-					and room_name not like '%lobby%'
-					and room_name not like '%switch%'
-					and room_name not like '%janit%'
-					and room_name not like '%server%'
-					and room_name not like '%booth%'
-					and room_name not like '%cubicle%'
-					and room_name not like '%seat%'
-					and room_name not like '%fac%'
-					and room_name not like '%tech%'
-					";
+				$sql .= " and gk_display = 'Y' ";
 
 			}
 
@@ -382,7 +364,7 @@ class FacilitiesController extends Controller
 
 			if ($_GET['bldg'] != '') {
 				$bldg = addslashes($_GET['bldg']);
-				$sql .= " AND gk_bldg_id = '$bldg' ";
+				$sql .= " AND (gk_bldg_id = '$bldg' or bldg_abbre = '$bldg') ";
 			}
 
 			if ($_GET['webapp']=='display') {
