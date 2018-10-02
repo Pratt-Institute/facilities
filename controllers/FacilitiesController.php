@@ -256,6 +256,12 @@ class FacilitiesController extends Controller
 		// 	echo json_encode($_POST);
 		// 	die();
 
+		foreach($_POST['info'] as $key=>$value) {
+			if ($value == '-') {
+				$_POST['info'][$key] = '';
+			}
+		}
+
 		$arr['post'] = json_encode($_POST);
 
 		$this->doLogEntry();
@@ -269,16 +275,18 @@ class FacilitiesController extends Controller
 
 		$model->accessible			= addslashes($_POST['info']['accessible']);
 		/// $model->bldg_abbre			= addslashes($_POST['info']['bldgAbbr']);
-		$model->bldg_name			= addslashes($_POST['info']['bldgName']);
+		/// $model->bldg_name			= addslashes($_POST['info']['bldgName']);
 		/// $model->bldg_code			= ltrim(addslashes($_POST['info']['buildingId']),'0');
 		/// $model->floor				= ltrim(addslashes($_POST['info']['floorId']),'0');
 		$model->room_name			= addslashes($_POST['info']['label']);
 		$model->latitude			= addslashes($_POST['info']['latitude']);
 		$model->longitude			= addslashes($_POST['info']['longitude']);
+
+		$model->room_no				= addslashes($_POST['info']['roomNo']);
 		$model->new_room_no			= addslashes($_POST['info']['newRoomNo']);
 
-		//$model->gk_display			= addslashes($_POST['info']['gkDisplay']);
-		$model->gk_display			= 'Y';
+		$model->gk_display			= addslashes($_POST['info']['gkDisplay']);
+
 		$model->gk_category			= addslashes($_POST['info']['category']);
 		$model->gk_fontsize			= addslashes($_POST['info']['fontSize']);
 		$model->gk_partialpath		= addslashes($_POST['info']['partialPath']);
@@ -326,16 +334,7 @@ class FacilitiesController extends Controller
 
 		} else {
 
-			// 	$sql .= " where ( gk_display = 'Y' or gk_department != '' or bldg_abbre = 'sg' )
-			// 		and space_type not in (7500,7700,7600)
-			// 		and department not in ('INACTIVE','UNUSABLE')
-			// 		and room_name not like '%inactive%'
-			// 		and department not like '%inactive%'
-			// 		and major_category not like '%inactive%'
-			// 		and functional_category not like '%inactive%' ";
-
 			$sql .= " where department not in ('INACTIVE','UNUSABLE')
-				and room_name not like '%inactive%'
 				and department not like '%inactive%'
 				and major_category not like '%inactive%'
 				and functional_category not like '%inactive%'
@@ -343,18 +342,16 @@ class FacilitiesController extends Controller
 				and gk_bldg_id != ''
 				and gk_floor_id != ''
 				and room_name != ''
+				and room_name not like '%inactive%'
+				and room_name not like '%storage%'
 				";
 
 			if ($_GET['floor'] != '') {
-
 				$sql .= " and gk_floor_id = '".addslashes($_GET['floor'])."' ";
-
 			}
 
 			if ($_GET['select'] == 'floor') {
-
 				$sql .= " and gk_display = 'Y' ";
-
 			}
 
 			if ($_GET['building'] != '') {
@@ -375,8 +372,9 @@ class FacilitiesController extends Controller
 				$sql .= " AND gk_display != 'N' ";
 			}
 
+			$sql .= " group by bldg_abbre, floor, room_no, gk_department, department, room_name, gk_sculpture_name ";
 			//$sql .= " group by bldg_abbre, floor, gk_department, department, room_name, gk_sculpture_name ";
-			$sql .= " group by bldg_abbre, floor, room_name ";
+			//$sql .= " group by bldg_abbre, floor, room_name ";
 			$sql .= " order by bldg_abbre asc, room_name asc, floor asc, new_room_no asc, department asc ";
 
 			if ($_GET['limit'] > '0') {
@@ -519,7 +517,7 @@ class FacilitiesController extends Controller
 
 				//$out['features'][$i]['user_properties']['count']			= $i . ' ' . $rowCount;
 				$out['features'][$i]['user_properties']['itemId']			= $i;
-				//$out['features'][$i]['user_properties']['sql']			= $sql;
+				//$out['features'][$i]['user_properties']['sql']			= $this->trim_all($sql);
 
 				//$out['features'][$i]['user_properties']['params']	= $posts;
 
@@ -530,20 +528,20 @@ class FacilitiesController extends Controller
 
 			}
 
-			// 	$out['features'][$i]['type'] = 'Feature';
-			//
-			// 	$out['features'][$i]['properties']['POINT_ID']		= $i;
-			// 	$out['features'][$i]['properties']['CATEGORY']		= $i;
-			// 	$out['features'][$i]['properties']['floorId']		= '0001';
-			// 	$out['features'][$i]['properties']['buildingId']	= '0001';
-			// 	$out['features'][$i]['properties']['label']			= $i;
-			// 	$out['features'][$i]['properties']['type']			= 'Icon';
-			//
-			// 	$out['features'][$i]['geometry']['type']				= 'Point';
-			// 	$out['features'][$i]['geometry']['coordinates'][0]		= '-73.964854';
-			// 	$out['features'][$i]['geometry']['coordinates'][1]		= '40.690357';
-			//
-			// 	$out['features'][$i]['user_properties']['itemId']	= $i;
+				$out['features'][$i]['type'] = 'Feature';
+
+				$out['features'][$i]['properties']['POINT_ID']		= $i;
+				$out['features'][$i]['properties']['CATEGORY']		= $i;
+				$out['features'][$i]['properties']['floorId']		= '0001';
+				$out['features'][$i]['properties']['buildingId']	= '0001';
+				$out['features'][$i]['properties']['label']			= $i;
+				$out['features'][$i]['properties']['type']			= 'Icon';
+
+				$out['features'][$i]['geometry']['type']				= 'Point';
+				$out['features'][$i]['geometry']['coordinates'][0]		= '-73.964854';
+				$out['features'][$i]['geometry']['coordinates'][1]		= '40.690357';
+
+				$out['features'][$i]['user_properties']['itemId']	= $i;
 
 		} else {
 			$out['success'] = false;
