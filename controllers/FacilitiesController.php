@@ -274,10 +274,12 @@ class FacilitiesController extends Controller
     	$model = $this->findModel($_POST['id']);
 
 		$model->accessible			= addslashes($_POST['info']['accessible']);
+
 		/// $model->bldg_abbre			= addslashes($_POST['info']['bldgAbbr']);
 		/// $model->bldg_name			= addslashes($_POST['info']['bldgName']);
 		/// $model->bldg_code			= ltrim(addslashes($_POST['info']['buildingId']),'0');
 		/// $model->floor				= ltrim(addslashes($_POST['info']['floorId']),'0');
+
 		$model->room_name			= addslashes($_POST['info']['label']);
 		$model->latitude			= addslashes($_POST['info']['latitude']);
 		$model->longitude			= addslashes($_POST['info']['longitude']);
@@ -296,8 +298,13 @@ class FacilitiesController extends Controller
 		$model->gk_tooltipbody		= addslashes($_POST['info']['tooltipBody']);
 		$model->gk_type				= addslashes($_POST['info']['type']);
 
-		$model->gk_bldg_id		= addslashes($_POST['info']['buildingId']);
-		$model->gk_floor_id		= addslashes($_POST['info']['floorId']);
+		//$model->gk_bldg_id		= addslashes($_POST['info']['buildingId']);
+		//$model->gk_floor_id		= addslashes($_POST['info']['floorId']);
+
+		if (addslashes($_POST['info']['bldgAbbr']) == 'SG') {
+			$model->gk_bldg_id	= '0000';
+			$model->gk_floor_id	= '0000';
+		}
 
 		if ($model->save(false)) {
 			$arr['success']	= true;
@@ -428,9 +435,8 @@ class FacilitiesController extends Controller
 				$out['features'][$i]['properties']['buildingId']		= trim($value['gk_bldg_id']);
 				$out['features'][$i]['properties']['floorId']			= trim($value['gk_floor_id']);
 				$out['features'][$i]['properties']['LEVEL_ID']			= trim($value['gk_floor_id']);
-				//$out['features'][$i]['properties']['floorId']			= '0001';
 
-				if (trim($value['bldg_abbre']) == 'SG') {
+				if (trim($value['buildingId']) < '1') {
 					$out['features'][$i]['properties']['buildingId']	= '0001';
 					$out['features'][$i]['properties']['LEVEL_ID']		= '0001';
 					$out['features'][$i]['properties']['floorId']		= '0001';
@@ -440,12 +446,12 @@ class FacilitiesController extends Controller
 
 				$out['features'][$i]['properties']['label']				= trim($value['room_name']);
 
-//				$out['features'][$i]['properties']['category']			= trim($value['gk_category'])=='' ? 'Label' : trim($value['gk_category']);
+				//	$out['features'][$i]['properties']['category']			= trim($value['gk_category'])=='' ? 'Label' : trim($value['gk_category']);
 				$out['features'][$i]['properties']['category']			= 'Information';
 
 				$out['features'][$i]['properties']['fontSize']			= trim($value['gk_fontsize'])<'2' ? intval(24) : intval(trim($value['gk_fontsize']));
 				//$out['features'][$i]['properties']['showOnCreation']	= trim($value['gk_showoncreation'])=='' ? true : trim($value['gk_showoncreation']);
-				$out['features'][$i]['properties']['showOnCreation']	= false;
+				$out['features'][$i]['properties']['showOnCreation']	= true;
 				$out['features'][$i]['properties']['showToolTip']		= trim($value['gk_showtooltip'])=='' ? true : trim($value['gk_showtooltip']);
 				$out['features'][$i]['properties']['tooltipTitle']		= trim($value['gk_tooltiptitle'])=='' ? 'tt title' : trim($value['gk_tooltiptitle']);
 				$out['features'][$i]['properties']['tooltipBody']		= trim($value['gk_tooltipbody'])=='' ? 'tt body' : trim($value['gk_tooltipbody']);
@@ -472,17 +478,17 @@ class FacilitiesController extends Controller
 
 				$out['features'][$i]['geometry']['type']				= 'Point';
 
-				if (trim($value['latitude']) != '') {
-					$value['latitude'] = floatval(substr(trim($value['latitude']),0,9) . rand(10000, 99999));
-				} else {
-					$value['latitude'] = floatval('-73.96' . rand(1000, 9999));
-				}
-
-				if (trim($value['longitude']) != '') {
-					$value['longitude'] = floatval(substr(trim($value['longitude']),0,9) . rand(10000, 99999));
-				} else {
-					$value['longitude'] = floatval('40.69' . rand(1000, 9999));
-				}
+				// 	if (trim($value['latitude']) != '') {
+				// 		$value['latitude'] = floatval(substr(trim($value['latitude']),0,9) . rand(10000, 99999));
+				// 	} else {
+				// 		$value['latitude'] = floatval('-73.96' . rand(1000, 9999));
+				// 	}
+				//
+				// 	if (trim($value['longitude']) != '') {
+				// 		$value['longitude'] = floatval(substr(trim($value['longitude']),0,9) . rand(10000, 99999));
+				// 	} else {
+				// 		$value['longitude'] = floatval('40.69' . rand(1000, 9999));
+				// 	}
 
 				$out['features'][$i]['geometry']['coordinates'][0]		= trim($value['longitude'])=='' ? '-73.964854' : trim($value['longitude']);
 				$out['features'][$i]['geometry']['coordinates'][1]		= trim($value['latitude'])=='' ? '40.690357' : trim($value['latitude']);
@@ -534,7 +540,7 @@ class FacilitiesController extends Controller
 				$out['features'][$i]['properties']['CATEGORY']		= $i;
 				$out['features'][$i]['properties']['floorId']		= '0001';
 				$out['features'][$i]['properties']['buildingId']	= '0001';
-				$out['features'][$i]['properties']['label']			= $i;
+				$out['features'][$i]['properties']['label']			= 'ignore';
 				$out['features'][$i]['properties']['type']			= 'Icon';
 
 				$out['features'][$i]['geometry']['type']				= 'Point';
