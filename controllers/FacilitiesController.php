@@ -366,9 +366,8 @@ class FacilitiesController extends Controller
 				$sql .= " AND bldg_abbre = '$bldg' ";
 			}
 
-			if ($_GET['bldg'] != '') {
-				$bldg = addslashes($_GET['bldg']);
-				$sql .= " AND (gk_bldg_id = '$bldg' or bldg_abbre = '$bldg') ";
+			if ($_GET['accessible'] == 'Y') {
+				$sql .= " AND `accessible` = 'Y' ";
 			}
 
 			if ($_GET['webapp']=='display') {
@@ -378,6 +377,13 @@ class FacilitiesController extends Controller
 			if ($_GET['webapp']!='manage') {
 				$sql .= " AND gk_display != 'N' ";
 			}
+
+
+			if ($_GET['bldg'] != '') {
+				$bldg = addslashes($_GET['bldg']);
+				$sql .= " AND (gk_bldg_id = '$bldg' or bldg_abbre = '$bldg') ";
+			}
+
 
 			$sql .= " group by bldg_abbre, floor, room_no, gk_department, department, room_name, gk_sculpture_name ";
 			//$sql .= " group by bldg_abbre, floor, gk_department, department, room_name, gk_sculpture_name ";
@@ -436,7 +442,7 @@ class FacilitiesController extends Controller
 				$out['features'][$i]['properties']['floorId']			= trim($value['gk_floor_id']);
 				$out['features'][$i]['properties']['LEVEL_ID']			= trim($value['gk_floor_id']);
 
-				if (trim($value['buildingId']) < '1') {
+				if (trim($value['buildingId']) == '0000') {
 					$out['features'][$i]['properties']['buildingId']	= '0001';
 					$out['features'][$i]['properties']['LEVEL_ID']		= '0001';
 					$out['features'][$i]['properties']['floorId']		= '0001';
@@ -464,16 +470,21 @@ class FacilitiesController extends Controller
 
 				//$host = addslashes($_GET['host']).'/';
 
-				$out['features'][$i]['properties']['partialPath']		= 'css/icons/ic_admin_info_v2.png';
+				$out['features'][$i]['properties']['partialPath']		= 'images/icons/ic_admin_info_v2.png';
 
 				if (trim($value['room_name']) == 'Sculpture') {
 					//$out['features'][$i]['properties']['partialPath'] = 'css/icons/ic_admin_camera.png';
-					$out['features'][$i]['properties']['partialPath'] = 'css/icons/ic_artwork.png';
+					$out['features'][$i]['properties']['partialPath'] = 'images/icons/ic_artwork.png';
+				}
+
+				if (trim($value['accessible']) == 'Y') {
+					//$out['features'][$i]['properties']['partialPath'] = 'css/icons/ic_admin_camera.png';
+					$out['features'][$i]['properties']['partialPath'] = 'images/icons/accessible.png';
 				}
 
 				if (trim($value['space_type']) == '7701') {
 					//$value['room_name'] = 'Restroom';
-					$out['features'][$i]['properties']['partialPath'] = 'css/icons/ic_admin_restroom_all.png';
+					$out['features'][$i]['properties']['partialPath'] = 'images/icons/ic_admin_restroom_all.png';
 				}
 
 				$out['features'][$i]['geometry']['type']				= 'Point';
@@ -548,6 +559,7 @@ class FacilitiesController extends Controller
 				$out['features'][$i]['geometry']['coordinates'][1]		= '40.690357';
 
 				$out['features'][$i]['user_properties']['itemId']	= $i;
+				$out['features'][$i]['user_properties']['sql']		= $this->trim_all($sql);
 
 		} else {
 			$out['success'] = false;
