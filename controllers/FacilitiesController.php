@@ -273,30 +273,30 @@ class FacilitiesController extends Controller
 
     	$model = $this->findModel($_POST['id']);
 
-		$model->accessible			= addslashes($_POST['info']['accessible']);
+		//	$model->accessible			= addslashes($_POST['info']['accessible']);
 
 		/// $model->bldg_abbre			= addslashes($_POST['info']['bldgAbbr']);
 		/// $model->bldg_name			= addslashes($_POST['info']['bldgName']);
 		/// $model->bldg_code			= ltrim(addslashes($_POST['info']['buildingId']),'0');
 		/// $model->floor				= ltrim(addslashes($_POST['info']['floorId']),'0');
 
-		$model->room_name			= addslashes($_POST['info']['label']);
-		$model->latitude			= addslashes($_POST['info']['latitude']);
-		$model->longitude			= addslashes($_POST['info']['longitude']);
-
-		$model->room_no				= addslashes($_POST['info']['roomNo']);
-		$model->new_room_no			= addslashes($_POST['info']['newRoomNo']);
-
-		$model->gk_display			= addslashes($_POST['info']['gkDisplay']);
-
-		$model->gk_category			= addslashes($_POST['info']['category']);
-		$model->gk_fontsize			= addslashes($_POST['info']['fontSize']);
-		$model->gk_partialpath		= addslashes($_POST['info']['partialPath']);
-		$model->gk_showoncreation	= addslashes($_POST['info']['showOnCreation']);
-		$model->gk_showtooltip		= addslashes($_POST['info']['showToolTip']);
-		$model->gk_tooltiptitle		= addslashes($_POST['info']['tooltipTitle']);
-		$model->gk_tooltipbody		= addslashes($_POST['info']['tooltipBody']);
-		$model->gk_type				= addslashes($_POST['info']['type']);
+		// 	$model->room_name			= addslashes($_POST['info']['label']);
+		// 	$model->latitude			= addslashes($_POST['info']['latitude']);
+		// 	$model->longitude			= addslashes($_POST['info']['longitude']);
+		//
+		// 	$model->room_no				= addslashes($_POST['info']['roomNo']);
+		// 	$model->new_room_no			= addslashes($_POST['info']['newRoomNo']);
+		//
+		// 	$model->gk_display			= addslashes($_POST['info']['gkDisplay']);
+		//
+		// 	$model->gk_category			= addslashes($_POST['info']['category']);
+		// 	$model->gk_fontsize			= addslashes($_POST['info']['fontSize']);
+		// 	$model->gk_partialpath		= addslashes($_POST['info']['partialPath']);
+		// 	$model->gk_showoncreation	= addslashes($_POST['info']['showOnCreation']);
+		// 	$model->gk_showtooltip		= addslashes($_POST['info']['showToolTip']);
+		// 	$model->gk_tooltiptitle		= addslashes($_POST['info']['tooltipTitle']);
+		// 	$model->gk_tooltipbody		= addslashes($_POST['info']['tooltipBody']);
+		// 	$model->gk_type				= addslashes($_POST['info']['type']);
 
 		//$model->gk_bldg_id		= addslashes($_POST['info']['buildingId']);
 		//$model->gk_floor_id		= addslashes($_POST['info']['floorId']);
@@ -376,19 +376,28 @@ class FacilitiesController extends Controller
 
 			if ($_GET['webapp']!='manage') {
 				$sql .= " AND gk_display != 'N' ";
+			} else {
+				//$sql .= " AND length('latitude') < 11 ";
 			}
-
 
 			if ($_GET['bldg'] != '') {
 				$bldg = addslashes($_GET['bldg']);
 				$sql .= " AND (gk_bldg_id = '$bldg' or bldg_abbre = '$bldg') ";
 			}
 
+			if ($_GET['match']!='') {
+				$sql .= " AND (room_name like '%".$_GET['match']."%' OR gk_sculpture_name like '%".$_GET['match']."%' OR gk_department like '%".$_GET['match']."%') ";
+				///$sql .= " AND (gk_bldg_id = '$bldg' or bldg_abbre = '$bldg') ";
+			}
 
-			$sql .= " group by bldg_abbre, floor, room_no, gk_department, department, room_name, gk_sculpture_name ";
-			//$sql .= " group by bldg_abbre, floor, gk_department, department, room_name, gk_sculpture_name ";
-			//$sql .= " group by bldg_abbre, floor, room_name ";
-			$sql .= " order by bldg_abbre asc, room_name asc, floor asc, new_room_no asc, department asc ";
+			if ($_GET['webapp'] == 'manage') {
+				$sql .= " ORDER BY length('latitude') DESC ";
+			} else {
+				$sql .= " group by bldg_abbre, floor, room_no, gk_department, department, room_name, latitude, gk_sculpture_name ";
+				//$sql .= " group by bldg_abbre, floor, gk_department, department, room_name, gk_sculpture_name ";
+				//$sql .= " group by bldg_abbre, floor, room_name ";
+				$sql .= " order by bldg_abbre asc, room_name asc, floor asc, new_room_no asc, department asc ";
+			}
 
 			if ($_GET['limit'] > '0') {
 				$limit = addslashes($_GET['limit']);
@@ -414,6 +423,13 @@ class FacilitiesController extends Controller
 			$i = 0;
 
 			foreach($result as $key=>$value) {
+
+				//40.690928064895
+
+				# filter out points that havn't been geolocated yet
+				if (@$_GET['recordId'] == '' && @$_GET['webapp'] != 'manage' && strlen(trim($value['latitude'])) < '13' && $value['gk_department'] == '') {
+					continue;
+				}
 
 				foreach($value as $key2=>$value2) {
 					$value2 = trim($value2);
@@ -442,12 +458,14 @@ class FacilitiesController extends Controller
 				$out['features'][$i]['properties']['floorId']			= trim($value['gk_floor_id']);
 				$out['features'][$i]['properties']['LEVEL_ID']			= trim($value['gk_floor_id']);
 
-				if (trim($value['buildingId']) == '0000') {
-					$out['features'][$i]['properties']['buildingId']	= '0001';
-					$out['features'][$i]['properties']['LEVEL_ID']		= '0001';
-					$out['features'][$i]['properties']['floorId']		= '0001';
+				if (trim($value['gk_floor_id']) == '0000') {
+
+					$out['features'][$i]['properties']['buildingId']	= '';
+					$out['features'][$i]['properties']['LEVEL_ID']		= '';
+					$out['features'][$i]['properties']['floorId']		= '';
 					//unset($out['features'][$i]['properties']['buildingId']);
 					//unset($out['features'][$i]['properties']['floorId']);
+
 				}
 
 				$out['features'][$i]['properties']['label']				= trim($value['room_name']);
@@ -466,7 +484,9 @@ class FacilitiesController extends Controller
 
 				//$out['features'][$i]['properties']['type']			= trim($value['gk_type'])=='' ? 'IconWithText' : trim($value['gk_type']);
 				$out['features'][$i]['properties']['type']				= 'IconWithText';
-				//$out['features'][$i]['properties']['type']			= 'Icon';
+				//$out['features'][$i]['properties']['type']				= 'Icon';
+
+				$out['features'][$i]['ignoreCollision']					= false;
 
 				//$host = addslashes($_GET['host']).'/';
 
@@ -545,6 +565,8 @@ class FacilitiesController extends Controller
 
 			}
 
+			if ($_GET['webapp'] != 'manage') {
+
 				$out['features'][$i]['type'] = 'Feature';
 
 				$out['features'][$i]['properties']['POINT_ID']		= $i;
@@ -560,6 +582,8 @@ class FacilitiesController extends Controller
 
 				$out['features'][$i]['user_properties']['itemId']	= $i;
 				$out['features'][$i]['user_properties']['sql']		= $this->trim_all($sql);
+
+			}
 
 		} else {
 			$out['success'] = false;
