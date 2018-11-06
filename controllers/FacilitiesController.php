@@ -280,14 +280,15 @@ class FacilitiesController extends Controller
 		/// $model->bldg_code			= ltrim(addslashes($_POST['info']['buildingId']),'0');
 		/// $model->floor				= ltrim(addslashes($_POST['info']['floorId']),'0');
 
-		// 	$model->room_name			= addslashes($_POST['info']['label']);
-		// 	$model->latitude			= addslashes($_POST['info']['latitude']);
-		// 	$model->longitude			= addslashes($_POST['info']['longitude']);
+		$model->room_name			= addslashes($_POST['info']['label']);
+		$model->latitude			= addslashes($_POST['info']['latitude']);
+		$model->longitude			= addslashes($_POST['info']['longitude']);
 		//
-		// 	$model->room_no				= addslashes($_POST['info']['roomNo']);
-		// 	$model->new_room_no			= addslashes($_POST['info']['newRoomNo']);
+		$model->room_no				= addslashes($_POST['info']['roomNo']);
+		$model->new_room_no			= addslashes($_POST['info']['newRoomNo']);
 		//
-		// 	$model->gk_display			= addslashes($_POST['info']['gkDisplay']);
+		//$model->gk_display			= addslashes($_POST['info']['gkDisplay']);
+		$model->gk_display			= 'Y';
 		//
 		// 	$model->gk_category			= addslashes($_POST['info']['category']);
 		// 	$model->gk_fontsize			= addslashes($_POST['info']['fontSize']);
@@ -391,6 +392,22 @@ class FacilitiesController extends Controller
 			}
 
 			if ($_GET['webapp'] == 'manage') {
+
+				$sql .= " and room_name not like '%dark%' ";
+				$sql .= " and room_name not like '%entr%' ";
+				//$sql .= " and room_name not like '%men%' ";
+				$sql .= " and room_name not like '%corr%' ";
+				$sql .= " and room_name not like '%ofc%' ";
+				$sql .= " and room_name not like '%ass%' ";
+				$sql .= " and room_name not like '%studio%' ";
+				$sql .= " and room_name not like '%stair%' ";
+				$sql .= " and room_name not like '%conf%' ";
+				$sql .= " and room_name not like '%jan.%' ";
+				$sql .= " and room_name not like '%vesti%' ";
+				$sql .= " and room_name not like '%elev%' ";
+				$sql .= " and room_name not like '%elec.%' ";
+				$sql .= " and room_name not like '%cubicle%' ";
+
 				$sql .= " ORDER BY length('latitude') DESC ";
 			} else {
 				$sql .= " group by bldg_abbre, floor, room_no, gk_department, department, room_name, latitude, gk_sculpture_name ";
@@ -424,11 +441,34 @@ class FacilitiesController extends Controller
 
 			foreach($result as $key=>$value) {
 
+				if ($_GET['webapp'] == 'manage') {
+
+					if (strlen(trim($value['latitude'])) > '12') {
+				//		continue;
+					}
+
+					if ($value['gk_department'] == '') {
+				//		continue;
+					}
+
+					if ($i > 20) {
+						continue;
+					}
+
+				}
+
+				if (trim($value['floor']) == 'GRND') {
+					$value['floor'] = 'Ground';
+				}
+				if (trim($value['floor']) == 'BSMT') {
+					$value['floor'] = 'Basement';
+				}
+
 				//40.690928064895
 
 				# filter out points that havn't been geolocated yet
 				if (@$_GET['recordId'] == '' && @$_GET['webapp'] != 'manage' && strlen(trim($value['latitude'])) < '13' && $value['gk_department'] == '') {
-					continue;
+			//		continue;
 				}
 
 				foreach($value as $key2=>$value2) {
@@ -454,9 +494,9 @@ class FacilitiesController extends Controller
 
 				$out['features'][$i]['type'] = 'Feature';
 
-				$out['features'][$i]['properties']['buildingId']		= trim($value['gk_bldg_id']);
-				$out['features'][$i]['properties']['floorId']			= trim($value['gk_floor_id']);
-				$out['features'][$i]['properties']['LEVEL_ID']			= trim($value['gk_floor_id']);
+				$out['features'][$i]['properties']['buildingId']	= trim($value['gk_bldg_id']);
+				$out['features'][$i]['properties']['floorId']		= trim($value['gk_floor_id']);
+				$out['features'][$i]['properties']['LEVEL_ID']		= trim($value['gk_floor_id']);
 
 				if (trim($value['gk_floor_id']) == '0000') {
 
@@ -476,7 +516,8 @@ class FacilitiesController extends Controller
 				$out['features'][$i]['properties']['fontSize']			= trim($value['gk_fontsize'])<'2' ? intval(24) : intval(trim($value['gk_fontsize']));
 				//$out['features'][$i]['properties']['showOnCreation']	= trim($value['gk_showoncreation'])=='' ? true : trim($value['gk_showoncreation']);
 				$out['features'][$i]['properties']['showOnCreation']	= true;
-				$out['features'][$i]['properties']['showToolTip']		= trim($value['gk_showtooltip'])=='' ? true : trim($value['gk_showtooltip']);
+				//$out['features'][$i]['properties']['showToolTip']		= trim($value['gk_showtooltip'])=='' ? true : trim($value['gk_showtooltip']);
+				$out['features'][$i]['properties']['showToolTip']		= false;
 				$out['features'][$i]['properties']['tooltipTitle']		= trim($value['gk_tooltiptitle'])=='' ? 'tt title' : trim($value['gk_tooltiptitle']);
 				$out['features'][$i]['properties']['tooltipBody']		= trim($value['gk_tooltipbody'])=='' ? 'tt body' : trim($value['gk_tooltipbody']);
 
@@ -507,7 +548,7 @@ class FacilitiesController extends Controller
 					$out['features'][$i]['properties']['partialPath'] = 'images/icons/ic_admin_restroom_all.png';
 				}
 
-				$out['features'][$i]['geometry']['type']				= 'Point';
+				$out['features'][$i]['geometry']['type']	= 'Point';
 
 				// 	if (trim($value['latitude']) != '') {
 				// 		$value['latitude'] = floatval(substr(trim($value['latitude']),0,9) . rand(10000, 99999));
@@ -543,11 +584,13 @@ class FacilitiesController extends Controller
 
 				if (trim($value['gk_department']) != '') {
 					$out['features'][$i]['user_properties']['gkDepartment']		= trim($value['gk_department']);
-					//$out['features'][$i]['properties']['label']					= trim($value['gk_department']);
+					//$out['features'][$i]['properties']['label']				= trim($value['gk_department']);
 				}
 
 				if (trim($value['gk_sculpture_name']) != '') {
-					$out['features'][$i]['user_properties']['gkArtist']			= trim($value['gk_sculpture_artist']);
+					//$out['features'][$i]['user_properties']['gkArtist']		= trim($value['gk_sculpture_artist']);
+					$out['features'][$i]['user_properties']['gkArtistFirst']	= trim($value['gk_sculpture_artist_first']);
+					$out['features'][$i]['user_properties']['gkArtistLast']		= trim($value['gk_sculpture_artist_last']);
 					$out['features'][$i]['user_properties']['gkArtName']		= trim($value['gk_sculpture_name']);
 					$out['features'][$i]['user_properties']['gkArtDate']		= trim($value['gk_sculpture_date']);
 				}
