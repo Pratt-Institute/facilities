@@ -386,6 +386,11 @@ class FacilitiesController extends Controller
 				$sql .= " AND (gk_bldg_id = '$bldg' or bldg_abbre = '$bldg') ";
 			}
 
+			if ($_GET['abbre'] != '') {
+				$abbre = addslashes($_GET['abbre']);
+				$sql .= " AND bldg_abbre = '$abbre' ";
+			}
+
 			if ($_GET['match']!='') {
 				$sql .= " AND (room_name like '%".$_GET['match']."%' OR gk_sculpture_name like '%".$_GET['match']."%' OR gk_department like '%".$_GET['match']."%') ";
 				///$sql .= " AND (gk_bldg_id = '$bldg' or bldg_abbre = '$bldg') ";
@@ -393,20 +398,20 @@ class FacilitiesController extends Controller
 
 			if ($_GET['webapp'] == 'manage') {
 
-				$sql .= " and room_name not like '%dark%' ";
-				$sql .= " and room_name not like '%entr%' ";
-				//$sql .= " and room_name not like '%men%' ";
-				$sql .= " and room_name not like '%corr%' ";
-				$sql .= " and room_name not like '%ofc%' ";
-				$sql .= " and room_name not like '%ass%' ";
-				$sql .= " and room_name not like '%studio%' ";
-				$sql .= " and room_name not like '%stair%' ";
-				$sql .= " and room_name not like '%conf%' ";
-				$sql .= " and room_name not like '%jan.%' ";
-				$sql .= " and room_name not like '%vesti%' ";
-				$sql .= " and room_name not like '%elev%' ";
-				$sql .= " and room_name not like '%elec.%' ";
-				$sql .= " and room_name not like '%cubicle%' ";
+// 				$sql .= " and room_name not like '%dark%' ";
+// 				$sql .= " and room_name not like '%entr%' ";
+// 				//$sql .= " and room_name not like '%men%' ";
+// 				$sql .= " and room_name not like '%corr%' ";
+// 				$sql .= " and room_name not like '%ofc%' ";
+// 				$sql .= " and room_name not like '%ass%' ";
+// 				$sql .= " and room_name not like '%studio%' ";
+// 				$sql .= " and room_name not like '%stair%' ";
+// 				$sql .= " and room_name not like '%conf%' ";
+// 				$sql .= " and room_name not like '%jan.%' ";
+// 				$sql .= " and room_name not like '%vesti%' ";
+// 				$sql .= " and room_name not like '%elev%' ";
+// 				$sql .= " and room_name not like '%elec.%' ";
+// 				$sql .= " and room_name not like '%cubicle%' ";
 
 				$sql .= " ORDER BY length('latitude') DESC ";
 			} else {
@@ -440,6 +445,21 @@ class FacilitiesController extends Controller
 			$i = 0;
 
 			foreach($result as $key=>$value) {
+
+				if ($rowCount > 10) {
+					if (stripos($value['room_name'], 'corr') > 0) {
+						continue;
+					}
+					if (stripos($value['room_name'], 'class') !== false) {
+						continue;
+					}
+					if (stripos($value['room_name'], "men's") !== false) {
+						continue;
+					}
+					if (stripos($value['room_name'], 'ofc') !== false) {
+						continue;
+					}
+				}
 
 				if ($_GET['webapp'] == 'manage') {
 
@@ -492,21 +512,21 @@ class FacilitiesController extends Controller
 				$value['room_name']	= ucwords(strtolower(trim($value['room_name'])));
 				$value['floor']		= strtolower(trim($value['floor']));
 
+				if (trim($value['gk_bldg_id']) == '0001') {
+					$value['bldg_name'] = 'ISC';
+				}
+
+				if (trim($value['gk_bldg_id']) == '0021') {
+					$value['bldg_name'] = 'ARC';
+				}
+
 				$out['features'][$i]['type'] = 'Feature';
 
 				$out['features'][$i]['properties']['buildingId']	= trim($value['gk_bldg_id']);
 				$out['features'][$i]['properties']['floorId']		= trim($value['gk_floor_id']);
 				$out['features'][$i]['properties']['LEVEL_ID']		= trim($value['gk_floor_id']);
 
-				if (trim($value['gk_floor_id']) == '0000') {
 
-					$out['features'][$i]['properties']['buildingId']	= '';
-					$out['features'][$i]['properties']['LEVEL_ID']		= '';
-					$out['features'][$i]['properties']['floorId']		= '';
-					//unset($out['features'][$i]['properties']['buildingId']);
-					//unset($out['features'][$i]['properties']['floorId']);
-
-				}
 
 				$out['features'][$i]['properties']['label']				= trim($value['room_name']);
 
@@ -595,6 +615,17 @@ class FacilitiesController extends Controller
 					$out['features'][$i]['user_properties']['gkArtDate']		= trim($value['gk_sculpture_date']);
 				}
 
+				if (trim($value['gk_floor_id']) == '0000') {
+
+					$out['features'][$i]['properties']['buildingId']	= '';
+					$out['features'][$i]['properties']['LEVEL_ID']		= '';
+					$out['features'][$i]['properties']['floorId']		= '';
+					$out['features'][$i]['user_properties']['roomNo']	= '';
+					//unset($out['features'][$i]['properties']['buildingId']);
+					//unset($out['features'][$i]['properties']['floorId']);
+
+				}
+
 				//$out['features'][$i]['user_properties']['count']			= $i . ' ' . $rowCount;
 				$out['features'][$i]['user_properties']['itemId']			= $i;
 				//$out['features'][$i]['user_properties']['sql']			= $this->trim_all($sql);
@@ -608,25 +639,23 @@ class FacilitiesController extends Controller
 
 			}
 
-			if ($_GET['webapp'] != 'manage') {
-
-				$out['features'][$i]['type'] = 'Feature';
-
-				$out['features'][$i]['properties']['POINT_ID']		= $i;
-				$out['features'][$i]['properties']['CATEGORY']		= $i;
-				$out['features'][$i]['properties']['floorId']		= '0001';
-				$out['features'][$i]['properties']['buildingId']	= '0001';
-				$out['features'][$i]['properties']['label']			= 'ignore';
-				$out['features'][$i]['properties']['type']			= 'Icon';
-
-				$out['features'][$i]['geometry']['type']				= 'Point';
-				$out['features'][$i]['geometry']['coordinates'][0]		= '-73.964854';
-				$out['features'][$i]['geometry']['coordinates'][1]		= '40.690357';
-
-				$out['features'][$i]['user_properties']['itemId']	= $i;
-				$out['features'][$i]['user_properties']['sql']		= $this->trim_all($sql);
-
-			}
+			// 	if ($_GET['webapp'] != 'manage') {
+			//
+			// 		$out['features'][$i]['type'] = 'Feature';
+			// 		$out['features'][$i]['properties']['POINT_ID']		= $i;
+			// 		$out['features'][$i]['properties']['CATEGORY']		= $i;
+			// 		$out['features'][$i]['properties']['floorId']		= '0001';
+			// 		$out['features'][$i]['properties']['buildingId']	= '0001';
+			// 		$out['features'][$i]['properties']['label']			= 'ignore';
+			// 		$out['features'][$i]['properties']['type']			= 'Icon';
+			// 		$out['features'][$i]['geometry']['type']			= 'Point';
+			// 		$out['features'][$i]['geometry']['coordinates'][0]	= '-73.964854';
+			// 		$out['features'][$i]['geometry']['coordinates'][1]	= '40.690357';
+			// 		$out['features'][$i]['user_properties']['itemId']	= $i;
+			// 		$out['features'][$i]['user_properties']['recordId']	= '1';
+			// 		$out['features'][$i]['user_properties']['sql']		= $this->trim_all($sql);
+			//
+			// 	}
 
 		} else {
 			$out['success'] = false;
