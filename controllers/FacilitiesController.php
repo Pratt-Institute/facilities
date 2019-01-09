@@ -123,7 +123,6 @@ class FacilitiesController extends Controller
 		}
 	}
 
-
 	public function actionLoad() {
 
 		echo 'loads done';
@@ -248,7 +247,6 @@ class FacilitiesController extends Controller
 
 		return true;
 	}
-
 
 	public function actionPut() {
 
@@ -446,6 +444,10 @@ class FacilitiesController extends Controller
 
 			foreach($result as $key=>$value) {
 
+				foreach($value as $field=>$record) {
+					$value[$field] = trim($record);
+				}
+
 				if ($rowCount > 10) {
 					if (stripos($value['room_name'], 'corr') > 0) {
 						continue;
@@ -484,8 +486,6 @@ class FacilitiesController extends Controller
 					$value['floor'] = 'Basement';
 				}
 
-				//40.690928064895
-
 				# filter out points that havn't been geolocated yet
 				if (@$_GET['recordId'] == '' && @$_GET['webapp'] != 'manage' && strlen(trim($value['latitude'])) < '13' && $value['gk_department'] == '') {
 			//		continue;
@@ -508,7 +508,7 @@ class FacilitiesController extends Controller
 					$value['bldg_name'] = 'Higgins Hall';
 				}
 
-				$value['bldg_name']	= ucwords(strtolower(trim($value['bldg_name'])));
+				//$value['bldg_name']	= ucwords(strtolower(trim($value['bldg_name'])));
 				$value['room_name']	= ucwords(strtolower(trim($value['room_name'])));
 				$value['floor']		= strtolower(trim($value['floor']));
 
@@ -522,11 +522,12 @@ class FacilitiesController extends Controller
 
 				$out['features'][$i]['type'] = 'Feature';
 
+				$out['features'][$i]['properties']['mapLabelId']	= '';
+
 				$out['features'][$i]['properties']['buildingId']	= trim($value['gk_bldg_id']);
+
 				$out['features'][$i]['properties']['floorId']		= trim($value['gk_floor_id']);
 				$out['features'][$i]['properties']['LEVEL_ID']		= trim($value['gk_floor_id']);
-
-
 
 				$out['features'][$i]['properties']['label']				= trim($value['room_name']);
 
@@ -537,9 +538,30 @@ class FacilitiesController extends Controller
 				//$out['features'][$i]['properties']['showOnCreation']	= trim($value['gk_showoncreation'])=='' ? true : trim($value['gk_showoncreation']);
 				$out['features'][$i]['properties']['showOnCreation']	= true;
 				//$out['features'][$i]['properties']['showToolTip']		= trim($value['gk_showtooltip'])=='' ? true : trim($value['gk_showtooltip']);
+				//$out['features'][$i]['properties']['showToolTip']		= false;
+				//$out['features'][$i]['properties']['tooltipTitle']		= trim($value['gk_tooltiptitle'])=='' ? 'tt title' : trim($value['gk_tooltiptitle']);
+				//$out['features'][$i]['properties']['tooltipBody']		= trim($value['gk_tooltipbody'])=='' ? 'tt body' : trim($value['gk_tooltipbody']);
+
 				$out['features'][$i]['properties']['showToolTip']		= false;
-				$out['features'][$i]['properties']['tooltipTitle']		= trim($value['gk_tooltiptitle'])=='' ? 'tt title' : trim($value['gk_tooltiptitle']);
-				$out['features'][$i]['properties']['tooltipBody']		= trim($value['gk_tooltipbody'])=='' ? 'tt body' : trim($value['gk_tooltipbody']);
+
+				if (trim($value['room_name']) != '') {
+					$out['features'][$i]['properties']['tooltipTitle'] = trim($value['room_name']);
+				}
+
+				if (trim($value['floor']) != '') {
+					$out['features'][$i]['properties']['tooltipBody'] = trim($value['floor']).' floor';
+
+					if (trim($value['new_room_no']) != '') {
+						$roomno = trim($value['new_room_no'],'-');
+					} else {
+						$roomno = trim($value['room_no'],'-');
+					}
+
+					if ($roomno != '') {
+						$out['features'][$i]['properties']['tooltipBody'] .= '<br>Room: '.$roomno;
+					}
+
+				}
 
 				$out['features'][$i]['properties']['location']			= 'URL';
 
@@ -585,14 +607,15 @@ class FacilitiesController extends Controller
 				$out['features'][$i]['geometry']['coordinates'][0]		= trim($value['longitude'])=='' ? '-73.964854' : trim($value['longitude']);
 				$out['features'][$i]['geometry']['coordinates'][1]		= trim($value['latitude'])=='' ? '40.690357' : trim($value['latitude']);
 
-				if (trim($value['new_room_no']) == '') {
-					$value['new_room_no'] = '-';
-				}
+				//if (trim($value['new_room_no']) == '') {
+				//	$value['new_room_no'] = '-';
+				//}
 
 				if (trim($value['gk_display']) == '') {
 					$value['gk_display'] = '-';
 				}
 
+				$out['features'][$i]['user_properties']['ambiarcId']		= '';
 				$out['features'][$i]['user_properties']['recordId']			= trim($value['id']);
 				$out['features'][$i]['user_properties']['accessible']		= trim($value['accessible']);
 				$out['features'][$i]['user_properties']['bldgName']			= trim($value['bldg_name']);
@@ -632,6 +655,8 @@ class FacilitiesController extends Controller
 
 				//$out['features'][$i]['user_properties']['params']	= $posts;
 
+				$j = $i;
+
 				$i++;
 				if ($i > 10) {
 				//	break;
@@ -639,28 +664,66 @@ class FacilitiesController extends Controller
 
 			}
 
-			// 	if ($_GET['webapp'] != 'manage') {
-			//
-			// 		$out['features'][$i]['type'] = 'Feature';
-			// 		$out['features'][$i]['properties']['POINT_ID']		= $i;
-			// 		$out['features'][$i]['properties']['CATEGORY']		= $i;
-			// 		$out['features'][$i]['properties']['floorId']		= '0001';
-			// 		$out['features'][$i]['properties']['buildingId']	= '0001';
-			// 		$out['features'][$i]['properties']['label']			= 'ignore';
-			// 		$out['features'][$i]['properties']['type']			= 'Icon';
-			// 		$out['features'][$i]['geometry']['type']			= 'Point';
-			// 		$out['features'][$i]['geometry']['coordinates'][0]	= '-73.964854';
-			// 		$out['features'][$i]['geometry']['coordinates'][1]	= '40.690357';
-			// 		$out['features'][$i]['user_properties']['itemId']	= $i;
-			// 		$out['features'][$i]['user_properties']['recordId']	= '1';
-			// 		$out['features'][$i]['user_properties']['sql']		= $this->trim_all($sql);
-			//
-			// 	}
+			//if ($_GET['webapp'] != 'manage' && $i == 0) {
+			if ($_GET['webapp'] != 'manage') {
+
+				$out['features'][$i] = $out['features'][$j];
+
+				// 	$out['features'][$i]['type'] = 'Feature';
+				//
+				// 	$out['features'][$i]['properties']['LEVEL_ID']		= '0001';
+				// 	$out['features'][$i]['properties']['category']		= 'Information';
+				// 	$out['features'][$i]['properties']['floorId']		= '0001';
+				// 	$out['features'][$i]['properties']['buildingId']	= '0001';
+				// 	$out['features'][$i]['properties']['fontSize']		= 24;
+				// 	$out['features'][$i]['properties']['location']		= 'URL';
+				// 	$out['features'][$i]['properties']['partialPath']	= 'images/icons/ic_admin_info_v2.png';
+				// 	$out['features'][$i]['properties']['showToolTip']	= false;
+				// 	$out['features'][$i]['properties']['tooltipBody']	= '';
+				// 	$out['features'][$i]['properties']['tooltipTitle']	= '';
+				// 	$out['features'][$i]['properties']['label']			= 'ignore';
+				// 	$out['features'][$i]['properties']['type']			= 'Icon';
+				//
+				// 	$out['features'][$i]['geometry']['type']			= 'Point';
+				// 	$out['features'][$i]['geometry']['coordinates'][0]	= '-73.964854';
+				// 	$out['features'][$i]['geometry']['coordinates'][1]	= '40.690357';
+				//
+				// 	$out['features'][$i]['user_properties']['accessible']	= 'N';
+				// 	$out['features'][$i]['user_properties']['bldgAbbr']		= '---';
+				// 	$out['features'][$i]['user_properties']['bldgName']		= '---';
+				// 	$out['features'][$i]['user_properties']['floorNo']		= '---';
+				// 	$out['features'][$i]['user_properties']['gkDisplay']	= '---';
+				// 	$out['features'][$i]['user_properties']['newRoomNo']	= '---';
+				// 	$out['features'][$i]['user_properties']['roomNo']	= '---';
+
+				$out['features'][$i]['properties']['showOnCreation']	= false;
+				$out['features'][$i]['user_properties']['itemId']		= $i;
+				$out['features'][$i]['user_properties']['recordId']		= '1';
+				$out['features'][$i]['user_properties']['sql']			= $this->trim_all($sql);
+
+			}
 
 		} else {
-			$out['success'] = false;
-			$out['message'] = 'no matches';
-			$out['sql'] = $this->trim_all($sql);
+
+			$i = 1;
+
+			$out['features'][$i]['type'] = 'Feature';
+			$out['features'][$i]['properties']['POINT_ID']		= $i;
+			$out['features'][$i]['properties']['CATEGORY']		= $i;
+			$out['features'][$i]['properties']['floorId']		= '0001';
+			$out['features'][$i]['properties']['buildingId']	= '0001';
+			$out['features'][$i]['properties']['label']			= 'ignore';
+			$out['features'][$i]['properties']['type']			= 'Icon';
+			$out['features'][$i]['geometry']['type']			= 'Point';
+			$out['features'][$i]['geometry']['coordinates'][0]	= '-73.964854';
+			$out['features'][$i]['geometry']['coordinates'][1]	= '40.690357';
+			$out['features'][$i]['user_properties']['itemId']	= $i;
+			$out['features'][$i]['user_properties']['recordId']	= '1';
+			$out['features'][$i]['user_properties']['sql']		= $this->trim_all($sql);
+
+			//$out['success'] = false;
+			//$out['message'] = 'no matches';
+			//$out['sql'] = $this->trim_all($sql);
 		}
 
 		header('Content-Type: application/json');
