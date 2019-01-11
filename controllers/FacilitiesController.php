@@ -616,6 +616,7 @@ class FacilitiesController extends Controller
 				}
 
 				$out['features'][$i]['user_properties']['ambiarcId']		= '';
+				$out['features'][$i]['user_properties']['recordType']		= 'n';
 				$out['features'][$i]['user_properties']['recordId']			= trim($value['id']);
 				$out['features'][$i]['user_properties']['accessible']		= trim($value['accessible']);
 				$out['features'][$i]['user_properties']['bldgName']			= trim($value['bldg_name']);
@@ -664,10 +665,8 @@ class FacilitiesController extends Controller
 
 			}
 
-			//if ($_GET['webapp'] != 'manage' && $i == 0) {
+			//if ($_GET['webapp'] != 'manage' && $i < 12) {
 			if ($_GET['webapp'] != 'manage') {
-
-				$out['features'][$i] = $out['features'][$j];
 
 				// 	$out['features'][$i]['type'] = 'Feature';
 				//
@@ -696,10 +695,33 @@ class FacilitiesController extends Controller
 				// 	$out['features'][$i]['user_properties']['newRoomNo']	= '---';
 				// 	$out['features'][$i]['user_properties']['roomNo']	= '---';
 
-				$out['features'][$i]['properties']['showOnCreation']	= false;
-				$out['features'][$i]['user_properties']['itemId']		= $i;
-				$out['features'][$i]['user_properties']['recordId']		= '1';
-				$out['features'][$i]['user_properties']['sql']			= $this->trim_all($sql);
+				$pad = 3;
+				if ($_GET['webapp'] != '') {
+					$pad = $pad + addslashes($_GET['countzeros']);
+				}
+
+				for ($x = 0; $x <= $pad; $x++) {
+
+					$out['features'][$i] = $out['features'][$j];
+
+					//$out['features'][$i]['properties']['label']				= uniqid();
+					$out['features'][$i]['properties']['showOnCreation']	= false;
+					$out['features'][$i]['user_properties']['recordType']	= 'x';
+					$out['features'][$i]['user_properties']['itemId']		= $i;
+					$out['features'][$i]['user_properties']['recordId']		= '1';
+					$out['features'][$i]['user_properties']['pad']			= $pad;
+					//$out['features'][$i]['user_properties']['sql']			= $this->trim_all($sql);
+
+					//$value['longitude'] = floatval(substr(trim($value['longitude']),0,14) . rand(10000, 99999));
+					//$value['latitude'] = floatval(substr(trim($value['latitude']),0,14) . rand(10000, 99999));
+
+					$out['features'][$i]['geometry']['coordinates'][0]	= $value['longitude'];
+					$out['features'][$i]['geometry']['coordinates'][1]	= $value['latitude'];
+
+					$j++;
+					$i++;
+
+				}
 
 			}
 
