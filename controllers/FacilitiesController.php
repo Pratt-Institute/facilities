@@ -301,8 +301,17 @@ class FacilitiesController extends Controller
 		/// $model->floor				= ltrim(addslashes($_POST['info']['floorId']),'0');
 
 		/// $model->room_name			= addslashes($_POST['info']['label']);
-		$model->latitude			= addslashes($_POST['info']['latitude']);
-		$model->longitude			= addslashes($_POST['info']['longitude']);
+
+
+		if ( is_numeric($_POST['info']['latitude']) ) {
+			$model->latitude			= addslashes($_POST['info']['latitude']);
+		}
+
+		if ( is_numeric($_POST['info']['longitude']) ) {
+			$model->longitude			= addslashes($_POST['info']['longitude']);
+		}
+
+
 		//
 		/// $model->room_no				= addslashes($_POST['info']['roomNo']);
 		/// $model->new_room_no			= addslashes($_POST['info']['newRoomNo']);
@@ -341,6 +350,35 @@ class FacilitiesController extends Controller
 		header('Content-Type: application/json');
 		echo json_encode($arr);
 		die();
+	}
+
+	public function actionTest() {
+
+		//Access to fetch at 'https://map.pratt.edu/facilities/web/facilities/test' from origin 'http://localhost' has been blocked by CORS policy: Request header field content-type is not allowed by Access-Control-Allow-Headers in preflight response.
+
+		header("Access-Control-Allow-Origin: *");
+		header('Content-Type: application/json');
+		//echo json_encode($_REQUEST);
+		//echo $_REQUEST;
+		//print_r($_REQUEST);
+		//print_r($_REQUEST,true);
+
+		$request = Yii::$app->request;
+		$post = $request->post();
+
+		$out[] = 'yay';
+		//$out[] = json_encode($_GET, true);
+		//$out[] = json_encode($_POST, true);
+		//$out[] = json_encode($_REQUEST, true);
+		$out[] = json_encode($post, true);
+		//$out[] = json_encode($request, true);
+
+		echo json_encode($out);
+
+		Yii::info('blah blah', 'own');
+
+		die();
+
 	}
 
     public function actionGet() {
@@ -968,7 +1006,15 @@ class FacilitiesController extends Controller
 
 				//$value['bldg_name']	= ucwords(strtolower(trim($value['bldg_name'])));
 
-				if ($value['room_name']	!= 'Restroom - All-Gender') {
+				// 	if ($value['room_name']	!= 'Restroom - All-Gender') {
+				// 		$value['room_name']	= ucwords(strtolower(trim($value['room_name'])));
+				// 	}
+
+				if (stripos('_'.$value['room_name'], 'stair') > '0') {
+					$value['room_name']	= ucwords(strtolower(trim($value['room_name'])));
+				}
+
+				if (stripos('_'.$value['room_name'], 'COOR') > '0') {
 					$value['room_name']	= ucwords(strtolower(trim($value['room_name'])));
 				}
 
@@ -991,8 +1037,8 @@ class FacilitiesController extends Controller
 				$out['features'][$i]['properties']['floorId']		= trim($value['gk_floor_id']);
 				$out['features'][$i]['properties']['LEVEL_ID']		= trim($value['gk_floor_id']);
 
-				$out['features'][$i]['properties']['label']				= trim($value['room_name']) . ' ' . $value['id'];
-				//$out['features'][$i]['properties']['label']				= trim($value['room_name']);
+				//$out['features'][$i]['properties']['label']				= trim($value['room_name']) . ' ' . $value['id'];
+				$out['features'][$i]['properties']['label']				= trim($value['room_name']);
 
 				//	$out['features'][$i]['properties']['category']			= trim($value['gk_category'])=='' ? 'Label' : trim($value['gk_category']);
 				$out['features'][$i]['properties']['category']			= 'Information';
@@ -1032,13 +1078,17 @@ class FacilitiesController extends Controller
 				$out['features'][$i]['properties']['type']				= 'IconWithText';
 				//$out['features'][$i]['properties']['type']				= 'Icon';
 
-				$out['features'][$i]['ignoreCollision']					= true;
+				$out['features'][$i]['ignoreCollision']					= false;
 
 				//$host = addslashes($post['host']).'/';
 
 				$out['features'][$i]['properties']['partialPath']		= 'images/icons/ic_admin_info_v2.png';
 
 				if (stripos('_'.$value['gk_space_provisions'], 'defibrillator') == '1') {
+					$out['features'][$i]['properties']['partialPath'] = 'images/icons/ic_admin_aed.png';
+				}
+
+				if (stripos('_'.$value['gk_space_provisions'], 'AED') == '1') {
 					$out['features'][$i]['properties']['partialPath'] = 'images/icons/ic_admin_aed.png';
 				}
 
@@ -1064,8 +1114,17 @@ class FacilitiesController extends Controller
 					$out['features'][$i]['properties']['partialPath'] = 'images/icons/ic_admin_restroom_all.png';
 				}
 
+				if (stripos('_'.$value['room_name'], 'elev') > '0') {
+					$out['features'][$i]['properties']['partialPath'] = 'images/icons/ic_admin_elevator_v2.png';
+				}
 
+				if (stripos('_'.$value['room_name'], 'stair') > '0') {
+					$out['features'][$i]['properties']['partialPath'] = 'images/icons/ic_admin_stairs.png';
+				}
 
+				if (stripos('_'.$value['room_name'], 'gallery') > '0') {
+					$out['features'][$i]['properties']['partialPath'] = 'images/icons/ic_artwork.png';
+				}
 
 				$out['features'][$i]['geometry']['type']	= 'Point';
 
