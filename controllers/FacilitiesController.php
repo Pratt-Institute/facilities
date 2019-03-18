@@ -262,12 +262,8 @@ class FacilitiesController extends Controller
 				}
 			}
 		}
-
 		fclose($myfile);
-
 		die();
-
-		return true;
 	}
 
 	public function actionPut() {
@@ -354,8 +350,6 @@ class FacilitiesController extends Controller
 
 	public function actionTest() {
 
-		//Access to fetch at 'https://map.pratt.edu/facilities/web/facilities/test' from origin 'http://localhost' has been blocked by CORS policy: Request header field content-type is not allowed by Access-Control-Allow-Headers in preflight response.
-
 		header("Access-Control-Allow-Origin: *");
 		header('Content-Type: application/json');
 		//echo json_encode($_REQUEST);
@@ -378,440 +372,7 @@ class FacilitiesController extends Controller
 		Yii::info('blah blah', 'own');
 
 		die();
-
 	}
-
-    public function actionGet() {
-
-		$this->doLogEntry();
-		$this->checkToken();
-
-		$posts = json_encode($_REQUEST, true);
-
-		/* TODO remove this when going live */
-    	header("Access-Control-Allow-Origin: *");
-
-		$sql = " select * from facilities ";
-
-		if ($_GET['recordId'] != '') {
-
-			$recordId = addslashes($_GET['recordId']);
-			$sql .= " where id = '$recordId' ";
-
-		} else {
-
-			$sql .= " where department not in ('INACTIVE','UNUSABLE')
-				and department not like '%inactive%'
-				and major_category not like '%inactive%'
-				and functional_category not like '%inactive%'
-				and gk_display != 'N'
-				and gk_bldg_id != ''
-				and gk_floor_id != ''
-				and room_name != ''
-				and room_name not like '%inactive%'
-				and room_name not like '%storage%'
-				";
-
-			if ($_GET['floor'] != '') {
-				$sql .= " and gk_floor_id = '".addslashes($_GET['floor'])."' ";
-			}
-
-			if ($_GET['select'] == 'floor') {
-				$sql .= " and gk_display = 'Y' ";
-			}
-
-			if ($_GET['building'] != '') {
-				$bldg = addslashes($_GET['building']);
-				$sql .= " AND bldg_abbre = '$bldg' ";
-			}
-
-			if ($_GET['accessible'] == 'Y') {
-				$sql .= " AND `accessible` = 'Y' ";
-			}
-
-			if ($_GET['webapp']=='display') {
-				$sql .= " AND gk_display != 'N' ";
-			}
-
-			if ($_GET['webapp']!='manage') {
-				$sql .= " AND gk_display != 'N' ";
-			} else {
-				//$sql .= " AND length('latitude') < 11 ";
-			}
-
-			if ($_GET['bldg'] != '') {
-				$bldg = addslashes($_GET['bldg']);
-				$sql .= " AND (gk_bldg_id = '$bldg' or bldg_abbre = '$bldg') ";
-			}
-
-			if ($_GET['abbre'] != '') {
-				$abbre = addslashes($_GET['abbre']);
-				$sql .= " AND bldg_abbre = '$abbre' ";
-			}
-
-			if ($_GET['match']!='') {
-				$sql .= " AND (room_name like '%".$_GET['match']."%' OR gk_sculpture_name like '%".$_GET['match']."%' OR gk_department like '%".$_GET['match']."%') ";
-				///$sql .= " AND (gk_bldg_id = '$bldg' or bldg_abbre = '$bldg') ";
-			}
-
-			if ($_GET['webapp'] == 'manage') {
-
-// 				$sql .= " and room_name not like '%dark%' ";
-// 				$sql .= " and room_name not like '%entr%' ";
-// 				//$sql .= " and room_name not like '%men%' ";
-// 				$sql .= " and room_name not like '%corr%' ";
-// 				$sql .= " and room_name not like '%ofc%' ";
-// 				$sql .= " and room_name not like '%ass%' ";
-// 				$sql .= " and room_name not like '%studio%' ";
-// 				$sql .= " and room_name not like '%stair%' ";
-// 				$sql .= " and room_name not like '%conf%' ";
-// 				$sql .= " and room_name not like '%jan.%' ";
-// 				$sql .= " and room_name not like '%vesti%' ";
-// 				$sql .= " and room_name not like '%elev%' ";
-// 				$sql .= " and room_name not like '%elec.%' ";
-// 				$sql .= " and room_name not like '%cubicle%' ";
-
-				$sql .= " ORDER BY length('latitude') DESC ";
-			} else {
-				$sql .= " group by bldg_abbre, floor, room_no, gk_department, department, room_name, latitude, gk_sculpture_name ";
-				//$sql .= " group by bldg_abbre, floor, gk_department, department, room_name, gk_sculpture_name ";
-				//$sql .= " group by bldg_abbre, floor, room_name ";
-				$sql .= " order by bldg_abbre asc, room_name asc, floor asc, new_room_no asc, department asc ";
-			}
-
-			if ($_GET['limit'] > '0') {
-				$limit = addslashes($_GET['limit']);
-				$sql .= " limit $limit ";
-			}
-
-		}
-
-		//echo $sql;
-		//die();
-
-		$connection = Yii::$app->getDb();
-		$command = $connection->createCommand($sql);
-
-		$result = $command->queryAll();
-
-		$rowCount = count($result);
-
-		if ($result[0]) {
-
-			$out['type'] = 'FeatureCollection';
-
-			$i = 0;
-
-			foreach($result as $key=>$value) {
-
-				foreach($value as $field=>$record) {
-					$value[$field] = trim($record);
-				}
-
-				if ($rowCount > 10) {
-					if (stripos($value['room_name'], 'corr') > 0) {
-						continue;
-					}
-					if (stripos($value['room_name'], 'class') !== false) {
-						continue;
-					}
-					if (stripos($value['room_name'], "men's") !== false) {
-						continue;
-					}
-					if (stripos($value['room_name'], 'ofc') !== false) {
-						continue;
-					}
-				}
-
-				if ($_GET['webapp'] == 'manage') {
-
-					if (strlen(trim($value['latitude'])) > '12') {
-				//		continue;
-					}
-
-					if ($value['gk_department'] == '') {
-				//		continue;
-					}
-
-					if ($i > 20) {
-						continue;
-					}
-
-				}
-
-				if (trim($value['floor']) == 'GRND') {
-					$value['floor'] = 'Ground';
-				}
-				if (trim($value['floor']) == 'BSMT') {
-					$value['floor'] = 'Basement';
-				}
-
-				# filter out points that havn't been geolocated yet
-				if (@$_GET['recordId'] == '' && @$_GET['webapp'] != 'manage' && strlen(trim($value['latitude'])) < '13' && $value['gk_department'] == '') {
-			//		continue;
-				}
-
-				foreach($value as $key2=>$value2) {
-					$value2 = trim($value2);
-					$value[$key2] = str_replace("'", '', $value2);
-					$value2 = mb_convert_encoding($value2, 'UTF-8', 'UTF-8');
-					$value[$key2] = str_replace("\\\\", "\\", $value[$key2]);
-				}
-
-				//$value['floor'] = preg_replace('/[^0-9,.]/', '', trim($value['floor']));
-
-				if (trim($value['floor']) == '') {
-					$value['floor'] = '1st';
-				}
-
-				if (trim($value['bldg_name']) == 'HIGGINS') {
-					$value['bldg_name'] = 'Higgins Hall';
-				}
-
-				//$value['bldg_name']	= ucwords(strtolower(trim($value['bldg_name'])));
-				$value['room_name']	= ucwords(strtolower(trim($value['room_name'])));
-				$value['floor']		= strtolower(trim($value['floor']));
-
-				if (trim($value['gk_bldg_id']) == '0001') {
-					$value['bldg_name'] = 'ISC';
-				}
-
-				if (trim($value['gk_bldg_id']) == '0021') {
-					$value['bldg_name'] = 'ARC';
-				}
-
-				$out['features'][$i]['type'] = 'Feature';
-
-				$out['features'][$i]['properties']['mapLabelId']	= '';
-
-				$out['features'][$i]['properties']['buildingId']	= trim($value['gk_bldg_id']);
-
-				$out['features'][$i]['properties']['floorId']		= trim($value['gk_floor_id']);
-				$out['features'][$i]['properties']['LEVEL_ID']		= trim($value['gk_floor_id']);
-
-				$out['features'][$i]['properties']['label']				= trim($value['room_name']);
-
-				//	$out['features'][$i]['properties']['category']			= trim($value['gk_category'])=='' ? 'Label' : trim($value['gk_category']);
-				$out['features'][$i]['properties']['category']			= 'Information';
-
-				$out['features'][$i]['properties']['fontSize']			= trim($value['gk_fontsize'])<'2' ? intval(24) : intval(trim($value['gk_fontsize']));
-				//$out['features'][$i]['properties']['showOnCreation']	= trim($value['gk_showoncreation'])=='' ? true : trim($value['gk_showoncreation']);
-				$out['features'][$i]['properties']['showOnCreation']	= true;
-				//$out['features'][$i]['properties']['showToolTip']		= trim($value['gk_showtooltip'])=='' ? true : trim($value['gk_showtooltip']);
-				//$out['features'][$i]['properties']['showToolTip']		= false;
-				//$out['features'][$i]['properties']['tooltipTitle']		= trim($value['gk_tooltiptitle'])=='' ? 'tt title' : trim($value['gk_tooltiptitle']);
-				//$out['features'][$i]['properties']['tooltipBody']		= trim($value['gk_tooltipbody'])=='' ? 'tt body' : trim($value['gk_tooltipbody']);
-
-				$out['features'][$i]['properties']['showToolTip']		= false;
-
-				if (trim($value['room_name']) != '') {
-					$out['features'][$i]['properties']['tooltipTitle'] = trim($value['room_name']);
-				}
-
-				if (trim($value['floor']) != '') {
-					$out['features'][$i]['properties']['tooltipBody'] = trim($value['floor']).' floor';
-
-					if (trim($value['new_room_no']) != '') {
-						$roomno = trim($value['new_room_no'],'-');
-					} else {
-						$roomno = trim($value['room_no'],'-');
-					}
-
-					if ($roomno != '') {
-						$out['features'][$i]['properties']['tooltipBody'] .= '<br>Room: '.$roomno;
-					}
-
-				}
-
-				$out['features'][$i]['properties']['location']			= 'URL';
-
-				//$out['features'][$i]['properties']['type']			= trim($value['gk_type'])=='' ? 'IconWithText' : trim($value['gk_type']);
-				$out['features'][$i]['properties']['type']				= 'IconWithText';
-				//$out['features'][$i]['properties']['type']				= 'Icon';
-
-				$out['features'][$i]['ignoreCollision']					= false;
-
-				//$host = addslashes($_GET['host']).'/';
-
-				$out['features'][$i]['properties']['partialPath']		= 'images/icons/ic_admin_info_v2.png';
-
-				if (trim($value['room_name']) == 'Sculpture') {
-					//$out['features'][$i]['properties']['partialPath'] = 'css/icons/ic_admin_camera.png';
-					$out['features'][$i]['properties']['partialPath'] = 'images/icons/ic_artwork.png';
-				}
-
-				if (trim($value['accessible']) == 'Y') {
-					//$out['features'][$i]['properties']['partialPath'] = 'css/icons/ic_admin_camera.png';
-					$out['features'][$i]['properties']['partialPath'] = 'images/icons/accessible.png';
-				}
-
-				if (trim($value['space_type']) == '7701') {
-					//$value['room_name'] = 'Restroom';
-					$out['features'][$i]['properties']['partialPath'] = 'images/icons/ic_admin_restroom_all.png';
-				}
-
-				$out['features'][$i]['geometry']['type']	= 'Point';
-
-				// 	if (trim($value['latitude']) != '') {
-				// 		$value['latitude'] = floatval(substr(trim($value['latitude']),0,9) . rand(10000, 99999));
-				// 	} else {
-				// 		$value['latitude'] = floatval('-73.96' . rand(1000, 9999));
-				// 	}
-				//
-				// 	if (trim($value['longitude']) != '') {
-				// 		$value['longitude'] = floatval(substr(trim($value['longitude']),0,9) . rand(10000, 99999));
-				// 	} else {
-				// 		$value['longitude'] = floatval('40.69' . rand(1000, 9999));
-				// 	}
-
-				$out['features'][$i]['geometry']['coordinates'][0]		= trim($value['longitude'])=='' ? '-73.964854' : trim($value['longitude']);
-				$out['features'][$i]['geometry']['coordinates'][1]		= trim($value['latitude'])=='' ? '40.690357' : trim($value['latitude']);
-
-				//if (trim($value['new_room_no']) == '') {
-				//	$value['new_room_no'] = '-';
-				//}
-
-				if (trim($value['gk_display']) == '') {
-					$value['gk_display'] = '-';
-				}
-
-				$out['features'][$i]['user_properties']['ambiarcId']		= '';
-				$out['features'][$i]['user_properties']['recordType']		= 'n';
-				$out['features'][$i]['user_properties']['recordId']			= trim($value['id']);
-				$out['features'][$i]['user_properties']['accessible']		= trim($value['accessible']);
-				$out['features'][$i]['user_properties']['bldgName']			= trim($value['bldg_name']);
-				$out['features'][$i]['user_properties']['bldgAbbr']			= trim($value['bldg_abbre']);
-				$out['features'][$i]['user_properties']['floorNo']			= trim($value['floor']);
-				$out['features'][$i]['user_properties']['roomNo']			= trim($value['room_no'])==''?'1':trim($value['room_no']);
-				$out['features'][$i]['user_properties']['newRoomNo']		= trim($value['new_room_no']);
-				$out['features'][$i]['user_properties']['gkDisplay']		= trim($value['gk_display']);
-
-				if (trim($value['gk_department']) != '') {
-					$out['features'][$i]['user_properties']['gkDepartment']		= trim($value['gk_department']);
-					//$out['features'][$i]['properties']['label']				= trim($value['gk_department']);
-				}
-
-				if (trim($value['gk_sculpture_name']) != '') {
-					//$out['features'][$i]['user_properties']['gkArtist']		= trim($value['gk_sculpture_artist']);
-					$out['features'][$i]['user_properties']['gkArtistFirst']	= trim($value['gk_sculpture_artist_first']);
-					$out['features'][$i]['user_properties']['gkArtistLast']		= trim($value['gk_sculpture_artist_last']);
-					$out['features'][$i]['user_properties']['gkArtName']		= trim($value['gk_sculpture_name']);
-					$out['features'][$i]['user_properties']['gkArtDate']		= trim($value['gk_sculpture_date']);
-				}
-
-				if (trim($value['gk_floor_id']) == '0000') {
-
-					$out['features'][$i]['properties']['buildingId']	= '';
-					$out['features'][$i]['properties']['LEVEL_ID']		= '';
-					$out['features'][$i]['properties']['floorId']		= '';
-					$out['features'][$i]['user_properties']['roomNo']	= '';
-					//unset($out['features'][$i]['properties']['buildingId']);
-					//unset($out['features'][$i]['properties']['floorId']);
-
-				}
-
-				//$out['features'][$i]['user_properties']['count']			= $i . ' ' . $rowCount;
-				$out['features'][$i]['user_properties']['itemId']			= $i;
-				//$out['features'][$i]['user_properties']['sql']			= $this->trim_all($sql);
-
-				//$out['features'][$i]['user_properties']['params']	= $posts;
-
-				$j = $i;
-
-				$i++;
-				if ($i > 10) {
-				//	break;
-				}
-
-			}
-
-			//if ($_GET['webapp'] != 'manage' && $i < 12) {
-			if ($_GET['webapp'] != 'manage') {
-
-				// 	$out['features'][$i]['type'] = 'Feature';
-				//
-				// 	$out['features'][$i]['properties']['LEVEL_ID']		= '0001';
-				// 	$out['features'][$i]['properties']['category']		= 'Information';
-				// 	$out['features'][$i]['properties']['floorId']		= '0001';
-				// 	$out['features'][$i]['properties']['buildingId']	= '0001';
-				// 	$out['features'][$i]['properties']['fontSize']		= 24;
-				// 	$out['features'][$i]['properties']['location']		= 'URL';
-				// 	$out['features'][$i]['properties']['partialPath']	= 'images/icons/ic_admin_info_v2.png';
-				// 	$out['features'][$i]['properties']['showToolTip']	= false;
-				// 	$out['features'][$i]['properties']['tooltipBody']	= '';
-				// 	$out['features'][$i]['properties']['tooltipTitle']	= '';
-				// 	$out['features'][$i]['properties']['label']			= 'ignore';
-				// 	$out['features'][$i]['properties']['type']			= 'Icon';
-				//
-				// 	$out['features'][$i]['geometry']['type']			= 'Point';
-				// 	$out['features'][$i]['geometry']['coordinates'][0]	= '-73.964854';
-				// 	$out['features'][$i]['geometry']['coordinates'][1]	= '40.690357';
-				//
-				// 	$out['features'][$i]['user_properties']['accessible']	= 'N';
-				// 	$out['features'][$i]['user_properties']['bldgAbbr']		= '---';
-				// 	$out['features'][$i]['user_properties']['bldgName']		= '---';
-				// 	$out['features'][$i]['user_properties']['floorNo']		= '---';
-				// 	$out['features'][$i]['user_properties']['gkDisplay']	= '---';
-				// 	$out['features'][$i]['user_properties']['newRoomNo']	= '---';
-				// 	$out['features'][$i]['user_properties']['roomNo']	= '---';
-
-				$pad = 3;
-				if ($_GET['webapp'] != '') {
-					$pad = $pad + addslashes($_GET['countzeros']);
-				}
-
-				for ($x = 0; $x <= $pad; $x++) {
-
-					$out['features'][$i] = $out['features'][$j];
-
-					//$out['features'][$i]['properties']['label']				= uniqid();
-					$out['features'][$i]['properties']['showOnCreation']	= false;
-					$out['features'][$i]['user_properties']['recordType']	= 'x';
-					$out['features'][$i]['user_properties']['itemId']		= $i;
-					$out['features'][$i]['user_properties']['recordId']		= '1';
-					$out['features'][$i]['user_properties']['pad']			= $pad;
-					//$out['features'][$i]['user_properties']['sql']			= $this->trim_all($sql);
-
-					//$value['longitude'] = floatval(substr(trim($value['longitude']),0,14) . rand(10000, 99999));
-					//$value['latitude'] = floatval(substr(trim($value['latitude']),0,14) . rand(10000, 99999));
-
-					$out['features'][$i]['geometry']['coordinates'][0]	= $value['longitude'];
-					$out['features'][$i]['geometry']['coordinates'][1]	= $value['latitude'];
-
-					$j++;
-					$i++;
-
-				}
-
-			}
-
-		} else {
-
-			$i = 1;
-
-			$out['features'][$i]['type'] = 'Feature';
-			$out['features'][$i]['properties']['POINT_ID']		= $i;
-			$out['features'][$i]['properties']['CATEGORY']		= $i;
-			$out['features'][$i]['properties']['floorId']		= '0001';
-			$out['features'][$i]['properties']['buildingId']	= '0001';
-			$out['features'][$i]['properties']['label']			= 'ignore';
-			$out['features'][$i]['properties']['type']			= 'Icon';
-			$out['features'][$i]['geometry']['type']			= 'Point';
-			$out['features'][$i]['geometry']['coordinates'][0]	= '-73.964854';
-			$out['features'][$i]['geometry']['coordinates'][1]	= '40.690357';
-			$out['features'][$i]['user_properties']['itemId']	= $i;
-			$out['features'][$i]['user_properties']['recordId']	= '1';
-			$out['features'][$i]['user_properties']['sql']		= $this->trim_all($sql);
-
-			//$out['success'] = false;
-			//$out['message'] = 'no matches';
-			//$out['sql'] = $this->trim_all($sql);
-		}
-
-		header('Content-Type: application/json');
-		echo json_encode($out);
-		die();
-    }
 
     public function actionPull() {
 
@@ -961,18 +522,17 @@ class FacilitiesController extends Controller
 
 				if ($post['webapp'] == 'manage') {
 
-					if (strlen(trim($value['latitude'])) > '12') {
-				//		continue;
-					}
+					//if (strlen(trim($value['latitude'])) > '12') {
+					//	continue;
+					//}
 
-					if ($value['gk_department'] == '') {
-				//		continue;
-					}
+					//if ($value['gk_department'] == '') {
+					//	continue;
+					//}
 
 					if ($i > 20) {
 						continue;
 					}
-
 				}
 
 				if (trim($value['floor']) == 'GRND') {
@@ -983,9 +543,9 @@ class FacilitiesController extends Controller
 				}
 
 				# filter out points that havn't been geolocated yet
-				if (@$post['recordId'] == '' && @$post['webapp'] != 'manage' && strlen(trim($value['latitude'])) < '13' && $value['gk_department'] == '') {
-			//		continue;
-				}
+				//if (@$post['recordId'] == '' && @$post['webapp'] != 'manage' && strlen(trim($value['latitude'])) < '13' && $value['gk_department'] == '') {
+				//	continue;
+				//}
 
 				foreach($value as $key2=>$value2) {
 					$value2 = trim($value2);
