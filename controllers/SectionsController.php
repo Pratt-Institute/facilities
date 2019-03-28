@@ -39,10 +39,10 @@ class SectionsController extends \yii\web\Controller
 		$arr['HHN']		=  '0004';
 		$arr['HHS']		=  '0004';
 		$arr['NH']		=  '0005';
-		$arr['mem']		=  '0006'; /// ???
+		$arr['MEM']		=  '0006'; /// ???
 		$arr['SU']		=  '0007';
-		$arr['Main']	=  '0008';
-		$arr['East']	=  '0009';
+		$arr['MAIN']	=  '0008';
+		$arr['EAST']	=  '0009';
 		$arr['SH']		=  '0010';
 		$arr['ELJ']		=  '0011'; /// ???
 		$arr['TH']		=  '0012';
@@ -52,11 +52,17 @@ class SectionsController extends \yii\web\Controller
 		$arr['MACH']	=  '0016';
 		$arr['ENGR']	=  '0017';
 		$arr['PS']		=  '0018'; /// ???
+		$arr['STEU']		=  '0018'; /// ???
 		$arr['FV']		=  '0019';
 		$arr['ARC']		=  '0021';
 		$arr['STAB']	=  '0022'; /// ???
 		$arr['CC']		=  '0023'; /// ???
 		$arr['MH']		=  '0024';
+
+		if (!$arr[$this->hall]) {
+			$exp = explode(' ',$this->hall);
+			return $exp[0];
+		}
 
 		return $arr[$this->hall];
 
@@ -66,7 +72,7 @@ class SectionsController extends \yii\web\Controller
 
 		$arr['0021'] = '40.690893,-73.962043';						///'ARC'
 		$arr['0023'] = '40.6910285949707,-73.96123504638672';		///'CC'
-		$arr['0060'] = '40.691675,-73.963465';						///'CHEM'
+		$arr['0015'] = '40.691675,-73.963465';						///'CHEM'
 		$arr['0003'] = '40.690072,-73.964735';						///'DEK'
 		$arr['0009'] = '40.691230,-73.963968';						///'EAST'
 		$arr['0017'] = '40.691282,-73.962845';						///'ENGR'
@@ -124,9 +130,10 @@ class SectionsController extends \yii\web\Controller
 				title like '%".addSlashes($_POST['filter'])."%' or
 				instructor_last like '%".addSlashes($_POST['filter'])."%'
 			)
+			and room IS NOT NULL
 
 			order by crn
-			limit 50
+			limit 75
 			";
 
 		$connection = Yii::$app->getDb();
@@ -149,24 +156,16 @@ class SectionsController extends \yii\web\Controller
 			$coordsExp = explode(',',$coords);
 
 			$line[] = '<li id=""
-				data-id=""
 				data-building="'.$this->buildingId.'"
-				data-floorid=""
 				data-room="'.$val['room'].'"
-				data-recordId=""
 				data-lat="'.$coordsExp[0].'"
 				data-long="'.$coordsExp[1].'"
-				data-hasimage=""
-				data-keywords=""
-				data-dept=""
-				data-title=""
-				data-phone=""
-				data-office=""
-				data-email=""
+				data-title="'.$val['title'].'"
 				data-professor="'.$val['instructor_last'].'"
 				data-course="'.$course.'"
 				data-times="'.$val['time'].'"
 				class=" list-group-item class-item ">
+			<div class="li-col li-icon li-icon-course"></div>
 			<div class="li-col li-label "><span class="list-group-point">'.$course.'</span></div>
 			<div class="li-col li-bldg "><span>'.$val['title'].'</span></div>
 			</li>';
