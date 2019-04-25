@@ -99,7 +99,6 @@ class FacilitiesController extends Controller
 			echo json_encode($arr);
 			die();
     	}
-
 	}
 
 	private function checkToken() {
@@ -348,28 +347,151 @@ class FacilitiesController extends Controller
 		die();
 	}
 
-	public function actionTest() {
+	public function actionYay() {
 
 		header("Access-Control-Allow-Origin: *");
+		header("Access-Control-Allow-Credentials: true");
+
 		header('Content-Type: application/json');
+
 		//echo json_encode($_REQUEST);
 		//echo $_REQUEST;
 		//print_r($_REQUEST);
 		//print_r($_REQUEST,true);
 
-		$request = Yii::$app->request;
-		$post = $request->post();
+		//$request = Yii::$app->request;
+		//$post = $request->post();
 
-		$out[] = 'yay';
+		$out[]['message'] = 'yay';
 		//$out[] = json_encode($_GET, true);
 		//$out[] = json_encode($_POST, true);
 		//$out[] = json_encode($_REQUEST, true);
-		$out[] = json_encode($post, true);
+		//$out[] = json_encode($post, true);
 		//$out[] = json_encode($request, true);
 
+		echo '{"results":';
 		echo json_encode($out);
+		echo '}';
 
-		Yii::info('blah blah', 'own');
+		//Yii::info('blah blah', 'own');
+
+		die();
+	}
+
+	public function actionTest() {
+
+		/// CREATE VIEW `maps`.`sections` AS SELECT * FROM `provost`.`sections`;
+		/// CREATE VIEW `maps`.`school` AS SELECT * FROM `provost`.`school`;
+		/// CREATE VIEW `maps`.`department` AS SELECT * FROM `provost`.`department`;
+		/// CREATE VIEW `maps`.`subject` AS SELECT * FROM `provost`.`subject`;
+
+		header("Access-Control-Allow-Origin: *");
+		header('Content-Type: application/json');
+
+		$request = Yii::$app->request;
+		$post = $request->post();
+		$params = print_r($_REQUEST, true);
+
+		$_GET['searchText'] = 'MACH. 003 ITL';
+
+		$searchText = addslashes($_GET['searchText']);
+		$searchText = trim($_GET['searchText']);
+		$searchText = preg_replace('/[^a-z\d ]/i', ' ', $searchText);
+		$searchText = preg_replace('!\s+!', ' ', $searchText);
+
+		$searchExp = explode(' ',$searchText);
+		foreach($searchExp as $snip) {
+			$warr[] = " S.room LIKE '%".$snip."%' ";
+		}
+		$wlike = implode(' OR ',$warr);
+
+		$sql = "
+			SELECT
+				S.*,
+				C.description AS school_name,
+				U.description AS subject_name
+			FROM sections S
+			LEFT JOIN school C ON C.code = S.school
+			LEFT JOIN subject U ON U.code = S.subject
+			WHERE ( $wlike )
+			";
+
+		$connection = Yii::$app->getDb();
+		$command = $connection->createCommand($sql);
+		$result = $command->queryAll();
+
+		$rowCount = count($result);
+
+		if ($result[0]) {
+
+			$out['type'] = 'FeatureCollection';
+
+			$i = 0;
+
+			$line = array();
+
+			foreach($result as $key=>$value) {
+
+				foreach($value as $field=>$record) {
+					$value[$field] = trim(addslashes($record));
+				}
+
+				//$similarity = similar_text($value['room'],$searchText,$percent);
+				//$levenshtein = levenshtein($value['room'],$searchText);
+
+				$match = 0;
+
+				foreach($searchExp as $val) {
+					if (strpos('_'.$value['room'], $val) > 0) {
+						$match++;
+					}
+				}
+
+				if ($match < 2) {
+					continue;
+				}
+
+				$rec = array();
+
+				//$rec['sim']		= '"sim":"'.$similarity.'"';
+				//$rec['has']		= '"hash":"'.$hash1.'-'.$hash2.'"';
+				//$rec['lev']		= '"lev":"'.$levenshtein.'"';
+				//$rec['per']		= '"per":"'.$percent.'"';
+
+				$rec['id']		= '"id":"'.$value['crn'].'"';
+				//$rec['userId']	= '"userId":"'.$value['room'].'"';
+				//$rec['title']	= '"title":"'.$value['semester'].'-'.$value['school'].'-'.$value['subject'].'-'.$value['coursenum'].'"';
+				//$rec['body']	= '"body":"'.$value['section'].'-'.$value['title'].'-'.$value['instructor_last'].'-'.$value['time'].'"';
+
+
+				$rec['title']		= '"title":"'.$value['title'].'"';
+				$rec['room']		= '"room":"'.$value['room'].'"';
+				$rec['course']		= '"course":"'.$value['semester'].'-'.$value['subject'].'-'.$value['section'].'"';
+				$rec['instrucor']	= '"instructor":"'.$value['instructor_last'].'"';
+				$rec['time']		= '"time":"'.$value['time'].'"';
+				$rec['school']		= '"school":"'.$value['school_name'].'"';
+				$rec['subject']		= '"subject":"'.$value['subject_name'].'"';
+
+
+				$line[] = '{'.implode(',',$rec).'}';
+
+			}
+
+			if (count($line)<1) {
+				echo '[{"title":"No Matches"}]';
+				die();
+			}
+
+			echo $out = '['.implode(',',$line).']';
+
+		} else {
+
+			echo '[{"title":"No Matches"}]';
+
+		}
+
+		Yii::info(' -------------------------- ', 'own');
+		Yii::info($out, 'own');
 
 		die();
 	}
@@ -385,7 +507,7 @@ class FacilitiesController extends Controller
 		//$stuff = print_r($_POST, true);
 
 		foreach($posts as $key=>$val) {
-			Yii::info(' -------------------------- ', 'own');
+			//Yii::info(' -------------------------- ', 'own');
 			$thing = $key;
 			$remove = array('{','}','"');
 			$clean = str_replace($remove, '', $thing);
@@ -396,8 +518,8 @@ class FacilitiesController extends Controller
 				//Yii::info($coln[0].' = '.$coln[1], 'own');
 			}
 		}
-		Yii::info(' ========================= ', 'own');
-		Yii::info($post['token'], 'own');
+		//Yii::info(' ========================= ', 'own');
+		//Yii::info($post['token'], 'own');
 
 		/* TODO remove this when going live */
     	header("Access-Control-Allow-Origin: *");
