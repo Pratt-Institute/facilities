@@ -392,7 +392,7 @@ class FacilitiesController extends Controller
 		$post = $request->post();
 		$params = print_r($_REQUEST, true);
 
-		$_GET['searchText'] = 'MACH. 003 ITL';
+		//$_GET['searchText'] = '4df4fv MXCH. 003 ITL';
 
 		$searchText = addslashes($_GET['searchText']);
 		$searchText = trim($_GET['searchText']);
@@ -402,8 +402,10 @@ class FacilitiesController extends Controller
 		$searchExp = explode(' ',$searchText);
 		foreach($searchExp as $snip) {
 			$warr[] = " S.room LIKE '%".$snip."%' ";
+			$warr2[] = " F.bldg_name LIKE '%".$snip."%' OR F.room_no LIKE '%".$snip."%' OR F.new_room_no  LIKE '%".$snip."%' ";
 		}
 		$wlike = implode(' OR ',$warr);
+		$wlike2 = implode(' OR ',$warr2);
 
 		$sql = "
 			SELECT
@@ -416,19 +418,13 @@ class FacilitiesController extends Controller
 			WHERE ( $wlike )
 			";
 
-		$connection = Yii::$app->getDb();
-		$command = $connection->createCommand($sql);
-		$result = $command->queryAll();
-
-		$rowCount = count($result);
+		$connection	= Yii::$app->getDb();
+		$command	= $connection->createCommand($sql);
+		$result		= $command->queryAll();
+		$rowCount	= count($result);
+		$line		= array();
 
 		if ($result[0]) {
-
-			$out['type'] = 'FeatureCollection';
-
-			$i = 0;
-
-			$line = array();
 
 			foreach($result as $key=>$value) {
 
@@ -436,11 +432,7 @@ class FacilitiesController extends Controller
 					$value[$field] = trim(addslashes($record));
 				}
 
-				//$similarity = similar_text($value['room'],$searchText,$percent);
-				//$levenshtein = levenshtein($value['room'],$searchText);
-
 				$match = 0;
-
 				foreach($searchExp as $val) {
 					if (strpos('_'.$value['room'], $val) > 0) {
 						$match++;
@@ -452,18 +444,7 @@ class FacilitiesController extends Controller
 				}
 
 				$rec = array();
-
-				//$rec['sim']		= '"sim":"'.$similarity.'"';
-				//$rec['has']		= '"hash":"'.$hash1.'-'.$hash2.'"';
-				//$rec['lev']		= '"lev":"'.$levenshtein.'"';
-				//$rec['per']		= '"per":"'.$percent.'"';
-
-				$rec['id']		= '"id":"'.$value['crn'].'"';
-				//$rec['userId']	= '"userId":"'.$value['room'].'"';
-				//$rec['title']	= '"title":"'.$value['semester'].'-'.$value['school'].'-'.$value['subject'].'-'.$value['coursenum'].'"';
-				//$rec['body']	= '"body":"'.$value['section'].'-'.$value['title'].'-'.$value['instructor_last'].'-'.$value['time'].'"';
-
-
+				$rec['id']			= '"id":"'.$value['crn'].'"';
 				$rec['title']		= '"title":"'.$value['title'].'"';
 				$rec['room']		= '"room":"'.$value['room'].'"';
 				$rec['course']		= '"course":"'.$value['semester'].'-'.$value['subject'].'-'.$value['section'].'"';
@@ -472,28 +453,72 @@ class FacilitiesController extends Controller
 				$rec['school']		= '"school":"'.$value['school_name'].'"';
 				$rec['subject']		= '"subject":"'.$value['subject_name'].'"';
 
-
 				$line[] = '{'.implode(',',$rec).'}';
-
 			}
-
-			if (count($line)<1) {
-				echo '[{"title":"No Matches"}]';
-				die();
-			}
-
-			echo $out = '['.implode(',',$line).']';
-
-		} else {
-
-			echo '[{"title":"No Matches"}]';
-
 		}
 
-		Yii::info(' -------------------------- ', 'own');
-		Yii::info($out, 'own');
+		$sql = '';
+		$result = '';
+
+		$sql = "
+			SELECT
+				F.id,
+				F.bldg_name,
+				F.room_no,
+				F.new_room_no,
+				F.department,
+				F.gk_department,
+				concat(F.bldg_name,' ',F.room_no,' ',F.new_room_no) as room_string
+			FROM facilities F
+			WHERE ( $wlike2 )
+			";
+
+		$command	= $connection->createCommand($sql);
+		$result		= $command->queryAll();
+		$rowCount	= count($result);
+
+		if ($result[0]) {
+
+			foreach($result as $key=>$value) {
+
+				foreach($value as $field=>$record) {
+					$value[$field] = trim(addslashes($record));
+				}
+
+				$match = 0;
+				foreach($searchExp as $val) {
+					if (stripos('_'.$value['room_string'], $val) > 0) {
+						$match++;
+					}
+				}
+
+				if ($match < 2) {
+					continue;
+				}
+
+				$value['room'] = $value['room_no'];
+				if ($value['new_room_no'] != '') {
+					$value['room'] = $value['new_room_no'];
+				}
+
+				$rec = array();
+				$rec['id']			= '"id":"'.$value['id'].'"';
+				$rec['title']		= '"title":"'.$value['bldg_name'].'"';
+				$rec['room']		= '"room":"'.$value['room'].'"';
+				$rec['course']		= '"course":"'.$value['department'].'"';
+				$rec['time']		= '"time":"'.$value['room_string'].'"';
+
+				$line[] = '{'.implode(',',$rec).'}';
+			}
+			echo $out = '['.implode(',',$line).']';
+		}
+
+		if (count($line)<1) {
+			echo '[{"title":"No Matches!"}]';
+		}
 
 		die();
+
 	}
 
     public function actionPull() {
@@ -821,6 +846,9 @@ class FacilitiesController extends Controller
 				// 	} else {
 				// 		$value['longitude'] = floatval('40.69' . rand(1000, 9999));
 				// 	}
+
+				$value['longitude']	= substr(trim($value['longitude']),0,10);
+				$value['latitude']	= substr(trim($value['latitude']),0,10);
 
 				$out['features'][$i]['geometry']['coordinates'][0]		= trim($value['longitude'])=='' ? '-73.964854' : trim($value['longitude']);
 				$out['features'][$i]['geometry']['coordinates'][1]		= trim($value['latitude'])=='' ? '40.690357' : trim($value['latitude']);

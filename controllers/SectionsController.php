@@ -157,7 +157,7 @@ class SectionsController extends \yii\web\Controller
 
 			$line[] = '<li id=""
 				data-building="'.$this->buildingId.'"
-				data-room="'.$val['room'].'"
+				data-roomname="'.$val['room'].'"
 				data-lat="'.$coordsExp[0].'"
 				data-long="'.$coordsExp[1].'"
 				data-title="'.$val['title'].'"
