@@ -549,78 +549,83 @@ class FacilitiesController extends Controller
 		/* TODO remove this when going live */
     	header("Access-Control-Allow-Origin: *");
 
-		$sql = " select * from facilities ";
+		$sql = " select
+					F.*,
+					C.copy
+				from facilities F
+				left join legend_copy C on C.id = F.legend
+				";
 
 		if ($post['provision'] != '') {
 
-			$sql .= " where gk_space_provisions like '%".addslashes($post['provision'])."%' ";
+			$sql .= " where F.gk_space_provisions like '%".addslashes($post['provision'])."%' ";
 
 		} elseif ($post['recordId'] != '') {
 
 			$recordId = addslashes($post['recordId']);
-			$sql .= " where id = '$recordId' ";
+			$sql .= " where F.id = '$recordId' ";
 
 		} else {
 
-			$sql .= " where department not in ('INACTIVE','UNUSABLE')
-				and department not like '%inactive%'
-				and major_category not like '%inactive%'
-				and functional_category not like '%inactive%'
-				and gk_display != 'N'
-				and gk_bldg_id != ''
-				and gk_floor_id != ''
-				and room_name != ''
-				and room_name not like '%inactive%'
-				and room_name not like '%storage%'
+			$sql .= " where F.department not in ('INACTIVE','UNUSABLE')
+				and F.department not like '%inactive%'
+				and F.major_category not like '%inactive%'
+				and F.functional_category not like '%inactive%'
+				and F.gk_display != 'N'
+				and F.gk_bldg_id != ''
+				and F.gk_floor_id != ''
+				and F.room_name != ''
+				and F.room_name not like '%inactive%'
+				and F.room_name not like '%storage%'
 				";
 
 			if ($post['floor'] != '') {
-				$sql .= " and gk_floor_id = '".addslashes($post['floor'])."' ";
+				$sql .= " and F.gk_floor_id = '".addslashes($post['floor'])."' ";
 			}
 
 			if ($post['select'] == 'floor') {
-				$sql .= " and gk_display = 'Y' ";
+				$sql .= " and F.gk_display = 'Y' ";
 			}
 
 			if ($post['building'] != '') {
 				$bldg = addslashes($post['building']);
-				$sql .= " AND bldg_abbre = '$bldg' ";
+				$sql .= " AND F.bldg_abbre = '$bldg' ";
 			}
 
 			if ($post['accessible'] == 'Y') {
-				$sql .= " AND `accessible` = 'Y' ";
+				$sql .= " AND F.accessible = 'Y' ";
 			}
 
 			if ($post['webapp']=='display') {
-				$sql .= " AND gk_display != 'N' ";
+				$sql .= " AND F.gk_display != 'N' ";
 			}
 
 			if ($post['webapp']!='manage') {
-				$sql .= " AND gk_display != 'N' ";
+				$sql .= " AND F.gk_display != 'N' ";
 			} else {
 				//$sql .= " AND length('latitude') < 11 ";
 			}
 
 			if ($post['bldg'] != '') {
 				$bldg = addslashes($post['bldg']);
-				$sql .= " AND (gk_bldg_id = '$bldg' or bldg_abbre = '$bldg') ";
+				$sql .= " AND (F.gk_bldg_id = '$bldg' or F.bldg_abbre = '$bldg') ";
 			}
 
 			if ($post['abbre'] != '') {
 				$abbre = addslashes($post['abbre']);
-				$sql .= " AND bldg_abbre = '$abbre' ";
+				$sql .= " AND F.bldg_abbre = '$abbre' ";
 			}
 
 			if ($post['match']!='') {
-				$sql .= " AND (room_name like '%".$post['match']."%' OR gk_sculpture_name like '%".$post['match']."%' OR gk_department like '%".$post['match']."%') ";
+				$sql .= " AND (F.room_name like '%".$post['match']."%' OR F.gk_sculpture_name like '%".$post['match']."%' OR F.gk_department like '%".$post['match']."%') ";
 			}
 
 			if ($post['webapp'] == 'manage') {
-				$sql .= " ORDER BY length('latitude') DESC ";
+				$sql .= " ORDER BY length('F.latitude') DESC ";
 			} else {
 				//$sql .= " group by bldg_abbre, floor, room_no, gk_department, department, room_name, latitude, gk_sculpture_name ";
-				$sql .= " group by bldg_abbre, floor,  gk_department, department,  latitude, gk_sculpture_name ";
-				$sql .= " order by bldg_abbre asc, room_name asc, floor asc, new_room_no asc, department asc ";
+				$sql .= " group by F.bldg_abbre, F.floor,  F.gk_department, F.department,  F.latitude, F.gk_sculpture_name ";
+				$sql .= " order by F.bldg_abbre asc, F.room_name asc, F.floor asc, F.new_room_no asc, F.department asc ";
 			}
 
 			if ($post['limit'] > '0') {
@@ -871,6 +876,7 @@ class FacilitiesController extends Controller
 				$out['features'][$i]['user_properties']['roomNo']			= trim($value['room_no'])==''?'1':trim($value['room_no']);
 				$out['features'][$i]['user_properties']['newRoomNo']		= trim($value['new_room_no']);
 				$out['features'][$i]['user_properties']['gkDisplay']		= trim($value['gk_display']);
+				$out['features'][$i]['user_properties']['legendCopy']		= trim($value['copy']);
 
 				if (trim($value['gk_department']) != '') {
 					$out['features'][$i]['user_properties']['gkDepartment']		= trim($value['gk_department']);
