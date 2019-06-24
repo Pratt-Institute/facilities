@@ -1082,7 +1082,7 @@ class FacilitiesController extends Controller
      */
     public function actionIndex()
     {
-    	//die();
+    	die();
 
         $searchModel = new FacilitiesSearch();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -1101,7 +1101,7 @@ class FacilitiesController extends Controller
      */
     public function actionView($id)
     {
-    	//die();
+    	die();
 
         return $this->render('view', [
             'model' => $this->findModel($id),
@@ -1137,7 +1137,7 @@ class FacilitiesController extends Controller
      */
     public function actionUpdate($id)
     {
-    	//die();
+    	die();
 
         $model = $this->findModel($id);
 
