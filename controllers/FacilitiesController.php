@@ -531,18 +531,43 @@ class FacilitiesController extends Controller
 		//$params = $request->bodyParams;
 		//$stuff = print_r($_POST, true);
 
-		foreach($posts as $key=>$val) {
-			//Yii::info(' -------------------------- ', 'own');
-			$thing = $key;
-			$remove = array('{','}','"');
-			$clean = str_replace($remove, '', $thing);
-			$explode = explode(',',$clean);
-			foreach($explode as $val) {
-				$coln = explode(':',$val);
-				$post[$coln[0]] = addslashes($coln[1]);
-				//Yii::info($coln[0].' = '.$coln[1], 'own');
+		///{"{\"
+
+		//if (stripos('_'.$posts, '{"{') == '1') {
+
+		if ($_POST['client']=='mobile') {
+
+			if ($_POST['floor']=='') {
+				die();
 			}
+
+			foreach($posts as $key=>$val) {
+				$post[$key] = addslashes($val);
+			}
+
+		} else {
+
+			foreach($posts as $key=>$val) {
+				//Yii::info(' -------------------------- ', 'own');
+				$thing = $key;
+				$remove = array('{','}','"');
+				$clean = str_replace($remove, '', $thing);
+				$explode = explode(',',$clean);
+				foreach($explode as $val) {
+					$coln = explode(':',$val);
+					$post[$coln[0]] = addslashes($coln[1]);
+					//Yii::info($coln[0].' = '.$coln[1], 'own');
+				}
+			}
+
 		}
+
+		//} else {
+		//	foreach($posts as $key=>$val) {
+		//		$post[$key] = addslashes($val);
+		//	}
+		//}
+
 		//Yii::info(' ========================= ', 'own');
 		//Yii::info($post['token'], 'own');
 
@@ -906,7 +931,10 @@ class FacilitiesController extends Controller
 				$out['features'][$i]['user_properties']['itemId']			= $i;
 				//$out['features'][$i]['user_properties']['sql']			= $this->trim_all($sql);
 
-				//$out['features'][$i]['user_properties']['params']	= $posts;
+				//$out['features'][$i]['user_properties']['params1']	= $posts;
+				//$out['features'][$i]['user_properties']['params2']	= $post;
+				//$out['features'][$i]['user_properties']['params3']	= $stuff;
+				//$out['features'][$i]['user_properties']['params4']	= $_POST;
 
 				$j = $i;
 
@@ -993,7 +1021,7 @@ class FacilitiesController extends Controller
 			$out['features'][$i]['geometry']['coordinates'][1]	= '40.690357';
 			$out['features'][$i]['user_properties']['itemId']	= $i;
 			$out['features'][$i]['user_properties']['recordId']	= '1';
-			$out['features'][$i]['user_properties']['sql']		= $this->trim_all($sql);
+			//$out['features'][$i]['user_properties']['sql']		= $this->trim_all($sql);
 
 			//$out['success'] = false;
 			//$out['message'] = 'no matches';
@@ -1004,6 +1032,43 @@ class FacilitiesController extends Controller
 		echo json_encode($out);
 		die();
     }
+
+
+	public function actionUnitytest() {
+
+		header('Content-Type: application/json');
+
+		//$_REQUEST['line'] = __LINE__;
+		//$_REQUEST['time'] = time();
+		//echo json_encode($_REQUEST);
+
+		//$_POST['timx'] = time();
+		echo json_encode($_POST);
+		die();
+
+		echo '{ "title" : "Decode JSON", "ID" : 20, "buttons" :
+			[
+				{
+					"title" : "Red ",
+					"image" : "Image Url"
+				},
+				{
+					"title" : "Green ",
+					"image" : "Image Url"
+				},
+				{
+					"title" : "Blue ",
+					"image" : "Image Url"
+				},
+				{
+					"title" : "Yellow ",
+					"image" : "Image Url"
+				}
+			]
+		}';
+		die();
+
+	}
 
     private function trim_all( $str , $what = NULL , $with = ' ' ) {
 		if( $what === NULL ) {
