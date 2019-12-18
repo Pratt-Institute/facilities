@@ -253,7 +253,12 @@ class SectionsController extends \yii\web\Controller
 				$out[$srcInt]['longitude']		= $coordsExp[1];
 
 				$out[$srcInt]['label_button']	= $val['title'];
-				$out[$srcInt]['label_poi']		= $val['room'];
+
+				$out[$srcInt]['label_poi']		= $val['title'];
+				$out[$srcInt]['label_poi']		.= "\n".$course;
+				$out[$srcInt]['label_poi']		.= "\n".$val['time'];
+				$out[$srcInt]['label_poi']		.= "\n".$val['instructor_last'];
+				$out[$srcInt]['label_poi']		.= "\n".$val['room'];
 
 				$srcInt++;
 

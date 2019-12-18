@@ -641,15 +641,19 @@ class FacilitiesController extends Controller
 						if ($filter[$dept] != '') {
 							continue;
 						}
-						$out['labs'][$i]['bldg_id']			= $value['gk_bldg_id'];
-						$out['labs'][$i]['floor_id']		= $value['gk_floor_id'];
-						$out['labs'][$i]['room']			= $room_number;
-						$out['labs'][$i]['name']			= $value['bldg_name'];
-						$out['labs'][$i]['code']			= $value['bldg_abbre'];
-						$out['labs'][$i]['dept']			= $dept;
-						$out['labs'][$i]['on_off_campus']	= $value['on_off_campus'];
-						$out['labs'][$i]['latitude']		= substr(trim($value['latitude']),0,10);
-						$out['labs'][$i]['longitude']		= substr(trim($value['longitude']),0,10);
+						$out['res'][$i]['type']			= "Labs";
+						$out['res'][$i]['label_button']	= $dept;
+						$out['res'][$i]['label_poi']	= $dept."\n".$room_number;
+
+						$out['res'][$i]['bldg_id']		= $value['gk_bldg_id'];
+						$out['res'][$i]['floor_id']		= $value['gk_floor_id'];
+						$out['res'][$i]['room']			= $room_number;
+						$out['res'][$i]['name']			= $value['bldg_name'];
+						$out['res'][$i]['code']			= $value['bldg_abbre'];
+						$out['res'][$i]['dept']			= $dept;
+						$out['res'][$i]['on_off_campus']= $value['on_off_campus'];
+						$out['res'][$i]['latitude']		= substr(trim($value['latitude']),0,10);
+						$out['res'][$i]['longitude']	= substr(trim($value['longitude']),0,10);
 						$filter[$dept] = $dept;
 						$i++;
 					}
@@ -677,6 +681,7 @@ class FacilitiesController extends Controller
 					gk_bldg_id
 				from facilities
 				where bldg_code != ''
+				and on_off_campus = 'ON'
 				group by bldg_abbre
 				order by bldg_abbre
 				";
@@ -696,12 +701,16 @@ class FacilitiesController extends Controller
 					$value[$field] = trim($record);
 				}
 
-				$out['buildings'][$i]['bldg_id']		= $value['gk_bldg_id'];
-				$out['buildings'][$i]['name']			= $value['bldg_name'];
-				$out['buildings'][$i]['code']			= $value['bldg_abbre'];
-				$out['buildings'][$i]['on_off_campus']	= $value['on_off_campus'];
-				$out['buildings'][$i]['latitude']		= substr(trim($value['latitude']),0,10);
-				$out['buildings'][$i]['longitude']		= substr(trim($value['longitude']),0,10);
+				$out['res'][$i]['type']			= "Buildings";
+				$out['res'][$i]['label_button']	= $value['bldg_name'];
+				$out['res'][$i]['label_poi']	= $value['bldg_name'];
+
+				$out['res'][$i]['bldg_id']		= $value['gk_bldg_id'];
+				$out['res'][$i]['name']			= $value['bldg_name'];
+				$out['res'][$i]['code']			= $value['bldg_abbre'];
+				$out['res'][$i]['on_off_campus']= $value['on_off_campus'];
+				$out['res'][$i]['latitude']		= substr(trim($value['latitude']),0,10);
+				$out['res'][$i]['longitude']	= substr(trim($value['longitude']),0,10);
 
 				$i++;
 			}
@@ -713,6 +722,15 @@ class FacilitiesController extends Controller
 	}
 
 	public function actionAcademics() {
+		$this->actionFacilities('Academics');
+	}
+	public function actionAdministration() {
+		$this->actionFacilities('Administration');
+	}
+
+	public function actionFacilities($type) {
+
+		//$type = addslashes($_GET['type']);
 
 		$this->doLogEntry();
 
@@ -760,6 +778,14 @@ class FacilitiesController extends Controller
 					$value[$field] = trim($record);
 				}
 				$dept_exp = explode('|',$value['gk_department']);
+
+				if ($type == 'Academics' && $value['gk_school'] == '') {
+					continue;
+				}
+				if ($type == 'Administration' && $value['gk_school'] != '') {
+					continue;
+				}
+
 				foreach($dept_exp as $dept) {
 					$dept = trim($dept);
 					if ($dept != '') {
@@ -772,15 +798,20 @@ class FacilitiesController extends Controller
 						} else {
 							$room_number = trim($value['room_no']);
 						}
-						$out['offices'][$i]['bldg_id']			= $value['gk_bldg_id'];
-						$out['offices'][$i]['floor_id']			= $value['gk_floor_id'];
-						$out['offices'][$i]['room']				= $room_number;
-						$out['offices'][$i]['name']				= $value['bldg_name'];
-						$out['offices'][$i]['code']				= $value['bldg_abbre'];
-						$out['offices'][$i]['dept']				= $dept;
-						$out['offices'][$i]['on_off_campus']	= $value['on_off_campus'];
-						$out['offices'][$i]['latitude']			= substr(trim($value['latitude']),0,10);
-						$out['offices'][$i]['longitude']		= substr(trim($value['longitude']),0,10);
+
+						$out['res'][$i]['type']				= $type;
+						$out['res'][$i]['label_button']		= $dept;
+						$out['res'][$i]['label_poi']		= $dept."\n".$room_number;
+
+						$out['res'][$i]['bldg_id']			= $value['gk_bldg_id'];
+						$out['res'][$i]['floor_id']			= $value['gk_floor_id'];
+						$out['res'][$i]['room']				= $room_number;
+						$out['res'][$i]['name']				= $value['bldg_name'];
+						$out['res'][$i]['code']				= $value['bldg_abbre'];
+						$out['res'][$i]['dept']				= $dept;
+						$out['res'][$i]['on_off_campus']	= $value['on_off_campus'];
+						$out['res'][$i]['latitude']			= substr(trim($value['latitude']),0,10);
+						$out['res'][$i]['longitude']		= substr(trim($value['longitude']),0,10);
 						$filter[$dept] = $dept;
 						$i++;
 					}
@@ -964,6 +995,10 @@ class FacilitiesController extends Controller
 					$value[$field] = trim($record);
 				}
 
+				if (stripos('_'.$value['room_name'], 'blue light') > 0) {
+					continue;
+				}
+
 				if (trim($value['new_room_no']) != '') {
 					$room_number = trim($value['new_room_no']);
 				} else {
@@ -1005,8 +1040,8 @@ class FacilitiesController extends Controller
 				$out[$this->srcInt]['longitude']	= substr(trim($value['longitude']),0,10);
 
 				//$out[$this->srcInt]['label']		= trim($value['bldg_name'].' '.$room_number);
-				$out[$this->srcInt]['label_button']		= trim($value['bldg_name'].' '.$room_number);
-				$out[$this->srcInt]['label_poi']			= trim($value['bldg_name'].' '.$room_number);
+				$out[$this->srcInt]['label_button']	= trim($value['bldg_name'].' '.$room_number);
+				$out[$this->srcInt]['label_poi']	= trim($value['room_name']."\n".$value['bldg_name']."\n".$room_number);
 
 
 				$this->srcInt = $this->srcInt + 1;
