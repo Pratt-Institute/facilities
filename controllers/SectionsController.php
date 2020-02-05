@@ -260,6 +260,8 @@ class SectionsController extends \yii\web\Controller
 				$out[$srcInt]['label_poi']		.= "\n".$val['instructor_last'];
 				$out[$srcInt]['label_poi']		.= "\n".$val['room'];
 
+				$out[$srcInt]['label_tooltip'] = $out[$srcInt]['label_poi'];
+
 				$srcInt++;
 
 				/// temporary to show only one result

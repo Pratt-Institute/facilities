@@ -96,7 +96,7 @@ class FacilitiesController extends Controller
 		}
 
 		if ($_SERVER['REMOTE_ADDR'] == '172.16.77.5') {
-			return true;
+		//	return true;
 		}
 
 	    $log = new Log();
@@ -369,6 +369,8 @@ class FacilitiesController extends Controller
 
 	public function actionYay() {
 
+		die();
+
 		header("Access-Control-Allow-Origin: *");
 		header("Access-Control-Allow-Credentials: true");
 
@@ -399,6 +401,8 @@ class FacilitiesController extends Controller
 	}
 
 	public function actionTest() {
+
+		die();
 
 		/// CREATE VIEW `maps`.`sections` AS SELECT * FROM `provost`.`sections`;
 		/// CREATE VIEW `maps`.`school` AS SELECT * FROM `provost`.`school`;
@@ -581,6 +585,136 @@ class FacilitiesController extends Controller
 
 	}
 
+
+
+
+
+
+	public function actionAccessible() {
+
+		$this->doLogEntry();
+
+    	header("Access-Control-Allow-Origin: *");
+
+		//$arr = $this->makeFacilitiesArray();
+
+		$sql = "
+			select
+				F.id,
+				F.bldg_abbre,
+				F.bldg_name,
+				F.gk_bldg_id,
+				F.gk_floor_id,
+				F.latitude,
+				F.longitude,
+				F.bldg_name,
+				F.room_name,
+
+				A.latitude as accessLat,
+				A.longitude as accessLong,
+				A.gk_bldg_id as accessBldgId,
+				A.gk_floor_id as accessFlrId,
+				A.overhead,
+				A.zoom,
+				A.rotation,
+				A.type,
+				A.legend_copy,
+
+				B.latitude as bldgLat,
+				B.longitude as bldgLong,
+
+				C.latitude as elevLat,
+				C.longitude as elevLong,
+
+				C.gk_bldg_id as elevBldgId,
+				C.gk_floor_id as elevFlrId
+
+			from facilities F
+
+			join access A on A.floor_fk = F.gk_floor_id
+
+			join buildings B on B.gk_bldg_id = F.gk_bldg_id
+
+			left join elevators E on F.id = E.entrance
+			left join facilities C on E.elevator = C.id
+
+			where F.accessible = 'Y'
+			and F.gk_display != 'N'
+			and F.room_name LIKE '%Entrance%'
+			order by F.bldg_name asc, F.room_name asc ";
+
+		$connection = Yii::$app->getDb();
+		$command = $connection->createCommand($sql);
+		$rows = $command->queryAll();
+		$rowCount = count($result);
+
+		if ($rows[0]) {
+			$i = 0;
+
+			foreach($rows as $row) {
+
+				$exp = array();
+
+				$exp = explode(' - ',$row['room_name']);
+
+				if ($exp[1] != '') {
+					$level = ' - '.$exp[1];
+				} else {
+					$level = '';
+				}
+
+				$type = ucwords($row['type']);
+
+				$out['res'][$i]['type']			= 'Accessible';
+				$out['res'][$i]['label_button']	= $row['bldg_name'].' '.$type;
+				$out['res'][$i]['label_poi']	= 'Accessible Entrance';
+				$out['res'][$i]['label_tooltip']= 'Accessible Entrance';
+
+				$out['res'][$i]['bldg_id']		= $row['gk_bldg_id'];
+				$out['res'][$i]['floor_id']		= $row['gk_floor_id'];
+				$out['res'][$i]['room']			= 'room';
+				$out['res'][$i]['name']			= $row['bldg_name'];
+				$out['res'][$i]['code']			= $row['bldg_abbre'];
+				$out['res'][$i]['dept']			= 'dept';
+				$out['res'][$i]['on_off_campus']= $row['on_off_campus'];
+				$out['res'][$i]['latitude']		= substr(trim($row['latitude']),0,10);
+				$out['res'][$i]['longitude']	= substr(trim($row['longitude']),0,10);
+				$i++;
+
+				/*
+				if ($row['elevLat'] != '') {
+
+					$type = 'Elevator';
+
+					$out['res'][$i]['type']			= 'Accessible';
+					$out['res'][$i]['label_button']	= $row['bldg_name'].' '.$type;
+					$out['res'][$i]['label_poi']	= $type;
+					$out['res'][$i]['label_tooltip']= 'tooltip';
+
+					$out['res'][$i]['bldg_id']		= $row['gk_bldg_id'];
+					$out['res'][$i]['floor_id']		= $row['gk_floor_id'];
+					$out['res'][$i]['room']			= 'room';
+					$out['res'][$i]['name']			= $row['bldg_name'];
+					$out['res'][$i]['code']			= $row['bldg_abbre'];
+					$out['res'][$i]['dept']			= 'dept';
+					$out['res'][$i]['on_off_campus']= $row['on_off_campus'];
+					$out['res'][$i]['latitude']		= substr(trim($row['elevLat']),0,10);
+					$out['res'][$i]['longitude']	= substr(trim($row['elevLong']),0,10);
+					$i++;
+				}
+				*/
+
+			}
+
+			ksort($out);
+		}
+		header('Content-Type: application/json');
+		echo json_encode($out);
+		die();
+	}
+
+
+
 	public function actionLabs() {
 
 		$this->doLogEntry();
@@ -644,6 +778,7 @@ class FacilitiesController extends Controller
 						$out['res'][$i]['type']			= "Labs";
 						$out['res'][$i]['label_button']	= $dept;
 						$out['res'][$i]['label_poi']	= $dept."\n".$room_number;
+						$out['res'][$i]['label_tooltip']= "Lab ".$dept."\nRoom ".$room_number;
 
 						$out['res'][$i]['bldg_id']		= $value['gk_bldg_id'];
 						$out['res'][$i]['floor_id']		= $value['gk_floor_id'];
@@ -704,6 +839,7 @@ class FacilitiesController extends Controller
 				$out['res'][$i]['type']			= "Buildings";
 				$out['res'][$i]['label_button']	= $value['bldg_name'];
 				$out['res'][$i]['label_poi']	= $value['bldg_name'];
+				$out['res'][$i]['label_tooltip']= $value['bldg_name'];
 
 				$out['res'][$i]['bldg_id']		= $value['gk_bldg_id'];
 				$out['res'][$i]['name']			= $value['bldg_name'];
@@ -802,6 +938,8 @@ class FacilitiesController extends Controller
 						$out['res'][$i]['type']				= $type;
 						$out['res'][$i]['label_button']		= $dept;
 						$out['res'][$i]['label_poi']		= $dept."\n".$room_number;
+						$out['res'][$i]['label_tooltip']	= $type.": ".$dept."\nRoom: ".$room_number;
+
 
 						$out['res'][$i]['bldg_id']			= $value['gk_bldg_id'];
 						$out['res'][$i]['floor_id']			= $value['gk_floor_id'];
@@ -825,6 +963,8 @@ class FacilitiesController extends Controller
 	}
 
 	public function actionLdap($searchTerm) {
+
+		die();
 
 		$conn = ldap_connect(LDAPHOST, LDAPPORT) or die('ldap connection error ' . LDAPHOST . ' : ' . LDAPPORT);
 		$bind = ldap_bind($conn, LDAPUSER, LDAPPASS);
@@ -936,6 +1076,122 @@ class FacilitiesController extends Controller
 		return $out;
 	}
 
+
+	public function searchLdap($searchTerm) {
+
+		$conn = ldap_connect(LDAPHOST, LDAPPORT) or die('ldap connection error ' . LDAPHOST . ' : ' . LDAPPORT);
+		$bind = ldap_bind($conn, LDAPUSER, LDAPPASS);
+		$fields = array('ou', 'title', 'telephoneNumber', 'roomNumber', 'sn', 'givenName', 'mail', 'employeeType', 'audio');
+
+		$dn = 'o=My Company, c=US';
+		$filter='( & (|(cn='.$searchTerm.'*)(mail='.$searchTerm.'*)(givenname='.$searchTerm.'*)(sn='.$searchTerm.'*)(displayName='.$searchTerm.'*)) (|(employeeType=Staff)(employeeType=Faculty)) )';
+		$sr = ldap_search($conn, LDAPBASE, $filter, $fields);
+		$info = ldap_get_entries($conn, $sr);
+		$line = array();
+
+		//print_r($info);
+
+		if ($info['count'] > '0') {
+
+			foreach($info as $key=>$val) {
+
+				if (@$val['audio'][0] > '0') {
+					continue;
+				}
+
+				if ($val['roomnumber'][0] == '') {
+					continue;
+				}
+
+				//echo "<br> room number " . $val['roomnumber'][0];
+
+				$exp1 = explode(',',$val['roomnumber'][0]);
+
+				$on_off = "ON";
+				if ($exp1[0] != 'Brooklyn Campus') {
+					$on_off = "OFF";
+					continue;
+				}
+				if ($exp1[1] == '') {
+					continue;
+				}
+
+				$hall = trim($exp1[1]);
+
+				$exp2 = explode(' ',$hall);
+
+				$this->hall = $exp2[0].' '.$exp2[1];
+				//$this->buildingId = $this->fetchBuildings();
+				$this->buildingId = Yii::$app->mycomponent->fetchBuildings($this->hall);
+
+				if ($this->buildingId == '') {
+					continue;
+				}
+
+				//$coords = $this->fetchCoords();
+				$coords = Yii::$app->mycomponent->fetchCoords($this->buildingId);
+				$coordsExp = explode(',',$coords);
+
+				$out[$this->srcInt]['type']			= 'Person';
+				$out[$this->srcInt]['id']			= '';
+				$out[$this->srcInt]['bldg_id']		= $this->buildingId;
+				$out[$this->srcInt]['floor_id']		= '';
+				$out[$this->srcInt]['bldg_name']	= $this->hall;
+				$out[$this->srcInt]['bldg_abbre']	= '';
+				$out[$this->srcInt]['room_no']		= $val['roomnumber'][0];
+				$out[$this->srcInt]['room_name']	= $val['roomnumber'][0];
+				$out[$this->srcInt]['on_off_campus']= $on_off;
+				$out[$this->srcInt]['school']		= $val['ou'][0];
+				$out[$this->srcInt]['department']	= $val['ou'][0];
+
+				$out[$this->srcInt]['title']		= $val['title'][0];
+				$out[$this->srcInt]['phone']		= $val['telephonenumber'][0];
+				//$out[$this->srcInt]['office']		= $val['roomnumber'][0];
+				$out[$this->srcInt]['lname']		= $val['sn'][0];
+				$out[$this->srcInt]['fname']		= $val['givenname'][0];
+				$out[$this->srcInt]['mail']			= $val['mail'][0];
+
+				$out[$this->srcInt]['professor']	= '';
+				$out[$this->srcInt]['course']		= '';
+				$out[$this->srcInt]['times']		= '';
+
+				$out[$this->srcInt]['sculpture']	= '';
+				$out[$this->srcInt]['artist']		= '';
+				$out[$this->srcInt]['latitude']		= $coordsExp[0];
+				$out[$this->srcInt]['longitude']	= $coordsExp[1];
+
+				//$out[$this->srcInt]['label']		= $hall;
+				$out[$this->srcInt]['label_button']	= $val['givenname'][0].' '.$val['sn'][0];
+				$out[$this->srcInt]['label_poi']	= $hall;
+				$out[$this->srcInt]['label_tooltip']	= $val['givenname'][0].' '.$val['sn'][0];
+
+
+				$this->srcInt = $this->srcInt + 1;
+
+				/// temporary to show only one result
+				//return $out;
+			}
+
+		} else {
+
+			$out[$this->srcInt]['type']		= 'Person';
+			$out[$this->srcInt]['bldg_id']	= 'No Matches';
+			$out[$this->srcInt]['message']	= 'No Matches in LDAP';
+			$this->srcInt = $this->srcInt + 1;
+
+		}
+
+		if (count($out) < 1) {
+			$out[$this->srcInt]['type']		= 'Person';
+			$out[$this->srcInt]['bldg_id']	= 'No Matches';
+			$out[$this->srcInt]['message']	= 'Building Not Found';
+			$this->srcInt = $this->srcInt + 1;
+		}
+
+		return $out;
+	}
+
+
 	public function searchFacilities($searchTerm) {
 
 		$this->doLogEntry();
@@ -1042,6 +1298,7 @@ class FacilitiesController extends Controller
 				//$out[$this->srcInt]['label']		= trim($value['bldg_name'].' '.$room_number);
 				$out[$this->srcInt]['label_button']	= trim($value['bldg_name'].' '.$room_number);
 				$out[$this->srcInt]['label_poi']	= trim($value['room_name']."\n".$value['bldg_name']."\n".$room_number);
+				$out[$this->srcInt]['label_tooltip']	= trim($value['room_name']."\n".$value['bldg_name']."\n".$room_number);
 
 
 				$this->srcInt = $this->srcInt + 1;
@@ -1075,6 +1332,19 @@ class FacilitiesController extends Controller
 		return Yii::$app->runAction('sections/search', $params);
 	}
 
+	public function searchSections() {
+
+		$request = Yii::$app->request;
+		$post = $request->post();
+
+		$params = array();
+
+		$_POST['filter'] = $post['search'];
+		$_GET['srcInt'] = $this->srcInt;
+
+		return Yii::$app->runAction('sections/search', $params);
+	}
+
 	public function actionSearch() {
 
 		header("Access-Control-Allow-Origin: *");
@@ -1091,11 +1361,21 @@ class FacilitiesController extends Controller
 
 		$post['search'] = trim($post['search']);
 
-		$out1 = $this->searchFacilities($post['search']);
-		$out2 = $this->actionLdap($post['search']);
-		$out3 = $this->actionSections($post['search']);
-		$out = $out1 + $out2 + $out3;
-		//$out = $out2;
+		if ($post['search'] == '') {
+
+			$out[0]['type']		= 'No Search String';
+			$out[0]['bldg_id']	= 'No Output';
+			$out[0]['message']	= 'No Output';
+
+		} else {
+
+			$out1 = $this->searchFacilities($post['search']);
+			$out2 = $this->searchLdap($post['search']);
+			$out3 = $this->searchSections($post['search']);
+			$out = $out1 + $out2 + $out3;
+			//$out = $out2;
+
+		}
 
 		//print_r($out);
 		//print_r($out1);
